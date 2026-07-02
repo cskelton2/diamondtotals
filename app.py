@@ -19,7 +19,7 @@ st.markdown("""
 st.title("⚾ DiamondTotals Master Slate Engine")
 st.write("Dynamic three-variable projection framework calculating Away, Home, and Consolidated game totals.")
 
-# --- 2. MASTER 2026 STAT MATRIX ---
+# --- 2. THE 2026 MATRIX (OFFENSE, BULLPEN, PARK) ---
 TEAM_METRICS = {
     "ATL": {"ParkFactor": 0.88, "BullpenWHIP": 1.09, "OffenseRPG": 4.73, "Name": "Braves (Truist Park)"},
     "STL": {"ParkFactor": 0.98, "BullpenWHIP": 1.39, "OffenseRPG": 4.35, "Name": "Cardinals (Busch Stadium)"},
@@ -53,12 +53,17 @@ TEAM_METRICS = {
     "WSH": {"ParkFactor": 1.01, "BullpenWHIP": 1.46, "OffenseRPG": 4.05, "Name": "Nationals (Nationals Park)"}
 }
 
-# --- 3. MLB API LIVE DATA EXTRACTION ---
-@st.cache_data(ttl=300)
+# --- 3. MLB API DATA FETCH & TRANSLATION ENGINE ---
+@st.cache_data(ttl=60) # Refreshes every 60 seconds automatically
 def fetch_verified_daily_slate():
-    """Queries official MLB endpoints. Automatically handles capitalization to lock matchups cleanly."""
     today_str = datetime.today().strftime('%Y-%m-%d')
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={today_str}&hydrate=probablePitcher,team"
+    
+    # Strict API-to-Model conversion translation dictionary
+    TRANSLATION_MAP = {
+        "SDP": "SD", "SFG": "SF", "TBR": "TB", "KCR": "KC", "CHW": "CWS", 
+        "OAK": "OAK", "WSH": "WSH", "ARI": "AZ", "ANA": "LAA", "LOS": "LAD"
+    }
     
     matchup_list = []
     try:
@@ -68,36 +73,31 @@ def fetch_verified_daily_slate():
             for game in dates[0].get("games", []):
                 teams = game.get("teams", {})
                 
-                # Dynamic capitalization sanitation prevents look-up drops
-                a_team = str(teams.get("away", {}).get("team", {}).get("triCode", "MLB")).upper().strip()
-                h_team = str(teams.get("home", {}).get("team", {}).get("triCode", "MLB")).upper().strip()
+                raw_away = str(teams.get("away", {}).get("team", {}).get("triCode", "MLB")).upper().strip()
+                raw_home = str(teams.get("home", {}).get("team", {}).get("triCode", "MLB")).upper().strip()
                 
-                if a_team == "MLB" or h_team == "MLB":
-                    a_team = str(teams.get("away", {}).get("team", {}).get("abbreviation", "MLB")).upper().strip()
-                    h_team = str(teams.get("home", {}).get("team", {}).get("abbreviation", "MLB")).upper().strip()
+                if raw_away == "MLB" or raw_home == "MLB":
+                    raw_away = str(teams.get("away", {}).get("team", {}).get("abbreviation", "MLB")).upper().strip()
+                    raw_home = str(teams.get("home", {}).get("team", {}).get("abbreviation", "MLB")).upper().strip()
                 
-                # Fix team code nomenclature maps from MLB systems
-                if a_team == "SDP": a_team = "SD"
-                if h_team == "SDP": h_team = "SD"
-                if a_team == "SFG": a_team = "SF"
-                if h_team == "SFG": h_team = "SF"
-                if a_team == "WSH": a_team = "WSH"
+                # Run mapping verification translations
+                away_team = TRANSLATION_MAP.get(raw_away, raw_away)
+                home_team = TRANSLATION_MAP.get(raw_home, raw_home)
                 
-                a_sp = teams.get("away", {}).get("probablePitcher", {}).get("fullName", "Undecided Pitcher")
-                h_sp = teams.get("home", {}).get("probablePitcher", {}).get("fullName", "Undecided Pitcher")
+                away_sp = teams.get("away", {}).get("probablePitcher", {}).get("fullName", "Undecided Pitcher")
+                home_sp = teams.get("home", {}).get("probablePitcher", {}).get("fullName", "Undecided Pitcher")
                 
-                if a_sp != "Undecided Pitcher" and h_sp != "Undecided Pitcher":
+                if away_sp != "Undecided Pitcher" and home_sp != "Undecided Pitcher":
                     matchup_list.append({
-                        "Label": f"⚾ {a_team} ({a_sp}) @ {h_team} ({h_sp})",
-                        "AwaySP": a_sp, "AwayTeam": a_team,
-                        "HomeSP": h_sp, "HomeTeam": h_team
+                        "Label": f"⚾ {away_team} ({away_sp}) @ {home_team} ({home_sp})",
+                        "AwaySP": away_sp, "AwayTeam": away_team,
+                        "HomeSP": home_sp, "HomeTeam": home_team
                     })
     except Exception:
         pass
     return matchup_list
 
 def compile_pitcher_metrics(name, team, seed_modifier):
-    """Binds starting rotations to statistically accurate advanced profiling distributions."""
     np.random.seed(abs(hash(name.lower().strip())) % 10000 + seed_modifier)
     
     # Core profiles for elite standard deviation checks
@@ -123,9 +123,9 @@ active_slate = fetch_verified_daily_slate()
 if not active_slate:
     st.warning("⚠️ Reading historical schedule matrices to populate interactive views...")
     active_slate = [{
-        "Label": "⚾ STL (Dustin May) @ ATL (Reynaldo Lopez)",
-        "AwaySP": "Dustin May", "AwayTeam": "STL",
-        "HomeSP": "Reynaldo Lopez", "HomeTeam": "ATL"
+        "Label": "⚾ CIN (Chase Burns) @ MIL (Jacob Misiorowski)",
+        "AwaySP": "Chase Burns", "AwayTeam": "CIN",
+        "HomeSP": "Jacob Misiorowski", "HomeTeam": "MIL"
     }]
 
 st.write("### 1. Matchup Configuration Parameters")
@@ -174,7 +174,7 @@ st.write("### 3. Structural Model Projections")
 away_team = str(profile1['Team']).upper().strip()
 home_team = str(profile2['Team']).upper().strip()
 
-# Dynamic metric lookup matrix
+# Mapped references with precise fallback safety constraints
 venue_metadata = TEAM_METRICS.get(home_team, {"ParkFactor": 1.00, "BullpenWHIP": 1.25, "OffenseRPG": 4.40, "Name": f"{home_team} Stadium"})
 away_metadata = TEAM_METRICS.get(away_team, {"ParkFactor": 1.00, "BullpenWHIP": 1.25, "OffenseRPG": 4.40, "Name": f"{away_team} Club"})
 
@@ -185,27 +185,22 @@ home_rpg = venue_metadata["OffenseRPG"]
 away_bp_whip = away_metadata["BullpenWHIP"]
 home_bp_whip = venue_metadata["BullpenWHIP"]
 
-# Display structural environmental parameters
 st.info(f"Stadium Context: **{venue_metadata['Name']}** (PF: `{park_factor:.2f}`) | "
         f"**{away_team} Relief Room:** `{away_bp_whip:.2f} WHIP` | **{home_team} Relief Room:** `{home_bp_whip:.2f} WHIP`")
 
-# THE RUN PROJECTION LOOPS
 p1_efx = (float(profile1['SIERA']) + float(profile1['xFIP'])) / 2
 p2_fx = (float(profile2['SIERA']) + float(profile2['xFIP'])) / 2
 
-# Away Team Projected Runs
+# Calculations
 raw_away_score = (away_rpg * (p2_fx / 4.00)) * park_factor
 projected_away_runs = round(raw_away_score + ((home_bp_whip - 1.25) * 1.50), 2)
 
-# Home Team Projected Runs
 raw_home_score = (home_rpg * (p1_efx / 4.00)) * park_factor
 projected_home_runs = round(raw_home_score + ((away_bp_whip - 1.25) * 1.50), 2)
 
-# Consolidated projections
 calculated_expected_total = round(projected_away_runs + projected_home_runs, 2)
 calculated_edge = round(calculated_expected_total - vegas_line, 2)
 
-# Render values
 val_col1, val_col2, val_col3 = st.columns(3)
 with val_col1:
     st.metric(label=f"Projected {away_team} Total", value=f"{projected_away_runs} Runs")
