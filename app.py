@@ -185,5 +185,11 @@ plt_ax.fill(angles, stats2, color='#3b82f6', alpha=0.15)
 plt_ax.set_theta_offset(np.pi / 2)
 plt_ax.set_theta_direction(-1)
 
+# FIXED: Re-aligned cleanly to prevent character breaks
 plt.xticks(angles[:-1], labels, color='#f8fafc', size=9, fontweight='bold')
-plt.
+plt.yticks([2, 4, 6, 8, 10], ["2", "4", "6", "8", "10"], color="#64748b", size=7)
+plt.ylim(0, 10)
+
+plt_ax.grid(color='#334155', linestyle='--', linewidth=0.5)
+plt_ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1), facecolor='#1e293b', edgecolor='#334155', labelcolor='#ffffff')
+st.pyplot(fig)
