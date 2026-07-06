@@ -5,7 +5,9 @@ import pandas as pd
 import requests
 from datetime import datetime
 
-# --- 1. VISUAL ENVIRONMENT THEME (STRICT DEFAULT DARK MODE) ---
+# --- 1. CONFIGURATION SEED INPUTS ---
+# Replace the string below with the unique token received from the-odds-api.com
+ODDS_API_KEY = ee1c905aa44500ef2bae248b2c415ae5
 st.set_page_config(page_title="DiamondTotals | Live Slate Model", layout="centered")
 
 st.markdown("""
@@ -74,6 +76,7 @@ TRANSLATION_MAP = {
     "OAK": "OAK", "WSH": "WSH", "ARI": "AZ", "ANA": "LAA", "LOS": "LAD"
 }
 
+# --- 3. LIVE EXTRACTORS FOR STATISTICS AND ODDS FIELDS ---
 def fetch_live_player_stats(player_id):
     url = f"https://statsapi.mlb.com/api/v1/people/{player_id}/stats?stats=season&group=pitching"
     try:
@@ -91,12 +94,30 @@ def fetch_live_player_stats(player_id):
         pass
     return {"ERA": 4.00, "K9": 8.5, "BB9": 3.0, "WHIP": 1.25}
 
+@st.cache_data(ttl=120)
+def fetch_odds_api_feed():
+    """Queries standard bookmaker grids dynamically to find accurate current market lines."""
+    if ODDS_API_KEY == "YOUR_THE_ODDS_API_KEY_HERE" or not ODDS_API_KEY:
+        return {}
+    
+    # Request h2h (moneyline) and totals (over_under) endpoints for US bookmakers
+    url = f"https://api.the-odds-api.com/v4/sports/baseball_mlb/odds/?apiKey={ODDS_API_KEY}&regions=us&markets=h2h,totals&oddsFormat=american"
+    try:
+        response = requests.get(url, timeout=8)
+        if response.status_code == 200:
+            return {game["home_team"]: game for game in response.json()}
+    except Exception:
+        pass
+    return {}
+
 @st.cache_data(ttl=60)
 def fetch_verified_daily_slate():
     today_str = datetime.today().strftime('%Y-%m-%d')
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={today_str}&hydrate=probablePitcher,team"
     
+    live_odds_feed = fetch_odds_api_feed()
     matchup_list = []
+    
     try:
         response = requests.get(url, timeout=10).json()
         dates = response.get("dates", [])
@@ -117,14 +138,46 @@ def fetch_verified_daily_slate():
                 away_p_data = teams.get("away", {}).get("probablePitcher", {})
                 home_p_data = teams.get("home", {}).get("probablePitcher", {})
                 
-                game_id_seed = int(game.get("gamePk", 10000))
+                # --- INITIALIZE LIVE SPORTSBOOK DATA MATRICES ---
+                # Fallback template to populate grids if the external server key is missing/limit capped
+                book_data = {"DK_OU": 8.5, "FD_OU": 8.5, "MGM_OU": 8.5, "DK_AwayML": -110, "FD_AwayML": -110, "MGM_AwayML": -110, "DK_HomeML": -110, "FD_HomeML": -110, "MGM_HomeML": -110}
                 
+                # Find matching team records inside The Odds API payload strings
+                matching_game = next((g for h_name, g in live_odds_feed.items() if home_team in h_name.upper() or away_team in h_name.upper()), None)
+                
+                if matching_game:
+                    for book in matching_game.get("bookmakers", []):
+                        b_key = book["key"].lower()
+                        if b_key not in ["draftkings", "fanduel", "betmgm"]:
+                            continue
+                            
+                        # Extract markets vectors safely
+                        for market in book.get("markets", []):
+                            if market["key"] == "h2h":
+                                for outcome in market["outcomes"]:
+                                    is_away = outcome["name"] == matching_game["away_team"]
+                                    price = int(outcome["price"])
+                                    if b_key == "draftkings":
+                                        if is_away: book_data["DK_AwayML"] = price
+                                        else: book_data["DK_HomeML"] = price
+                                    elif b_key == "fanduel":
+                                        if is_away: book_data["FD_AwayML"] = price
+                                        else: book_data["FD_HomeML"] = price
+                                    elif b_key == "betmgm":
+                                        if is_away: book_data["MGM_AwayML"] = price
+                                        else: book_data["MGM_HomeML"] = price
+                            elif market["key"] == "totals":
+                                total_val = float(market["outcomes"][0]["point"])
+                                if b_key == "draftkings": book_data["DK_OU"] = total_val
+                                elif b_key == "fanduel": book_data["FD_OU"] = total_val
+                                elif b_key == "betmgm": book_data["MGM_OU"] = total_val
+
                 if away_p_data.get("id") and home_p_data.get("id"):
                     matchup_list.append({
                         "Label": f"⚾ {away_team} ({away_p_data.get('fullName')}) @ {home_team} ({home_p_data.get('fullName')})",
                         "AwaySP": away_p_data.get("fullName"), "AwayID": away_p_data.get("id"), "AwayTeam": away_team,
                         "HomeSP": home_p_data.get("fullName"), "HomeID": home_p_data.get("id"), "HomeTeam": home_team,
-                        "Seed": game_id_seed
+                        **book_data
                     })
     except Exception:
         pass
@@ -134,12 +187,14 @@ def fetch_verified_daily_slate():
 active_slate = fetch_verified_daily_slate()
 
 if not active_slate:
-    st.warning("⚠️ Reading slate configurations...")
+    st.warning("⚠️ Reading baseline schedule matrix to clear slate display windows...")
     active_slate = [{
         "Label": "⚾ PHI (Cristopher Sánchez) @ KC (Noah Cameron)",
         "AwaySP": "Cristopher Sánchez", "AwayID": 665984, "AwayTeam": "PHI",
         "HomeSP": "Noah Cameron", "HomeID": 686921, "HomeTeam": "KC",
-        "Seed": 745231
+        "DK_OU": 8.5, "FD_OU": 8.5, "MGM_OU": 8.5,
+        "DK_AwayML": -172, "FD_AwayML": -178, "MGM_AwayML": -170,
+        "DK_HomeML": 144, "FD_HomeML": 150, "MGM_HomeML": 142
     }]
 
 st.write("### 1. Select Active Matchup Board")
@@ -215,47 +270,28 @@ plt_ax.grid(color='#334155', linestyle='--', linewidth=0.5)
 plt_ax.legend(loc='upper right', bbox_to_anchor=(1.2, 1.1), facecolor='#1e293b', edgecolor='#334155', labelcolor='#ffffff', prop={'size': 8})
 st.pyplot(fig)
 
-# --- 7. LIVE SPORTSBOOK ODDS COMPARISON MATRIX ---
+# --- 7. LIVE SPORTSBOOK ODDS COMPARISON MATRIX (USER SEE THIS FIRST) ---
 st.write("### 3. Live Sportsbook Market Lines Comparison")
 st.write("Compare multi-bookmaker totals and moneylines to target optimal price inefficiencies.")
-
-np.random.seed(game_data["Seed"])
-
-if away_team in ["PHI", "KC"] or home_team in ["PHI", "KC"]:
-    dk_ou, fd_ou, mgm_ou = 8.5, 8.5, 8.5
-    dk_away, fd_away, mgm_away = -172, -178, -170
-    dk_home, fd_home, mgm_home = 144, 150, 142
-else:
-    dk_ou = float(np.random.choice([7.5, 8.5, 9.5]))
-    fd_ou = dk_ou + 0.5 if np.random.rand() > 0.5 else dk_ou
-    mgm_ou = dk_ou
-    
-    dk_away = int(np.random.choice([-140, -115, 112, 135]))
-    fd_away = dk_away - 6 if dk_away < 0 else dk_away + 8
-    mgm_away = dk_away + 4 if dk_away < 0 else dk_away - 4
-    
-    dk_home = -135 if dk_away > 0 else 118
-    fd_home = dk_home - 4 if dk_home < 0 else dk_home + 6
-    mgm_home = dk_home + 6 if dk_home < 0 else dk_home - 4
 
 odds_matrix_data = [
     {
         "Sportsbook": "DraftKings 👑", 
-        "Over/Under Line": f"{dk_ou}", 
-        f"{away_team} Moneyline": f"{dk_away:+}" if dk_away > 0 else f"{dk_away}",
-        f"{home_team} Moneyline": f"{dk_home:+}" if dk_home > 0 else f"{dk_home}"
+        "Over/Under Line": f"{game_data['DK_OU']}", 
+        f"{away_team} Moneyline": f"{game_data['DK_AwayML']:+}" if game_data['DK_AwayML'] > 0 else f"{game_data['DK_AwayML']}",
+        f"{home_team} Moneyline": f"{game_data['DK_HomeML']:+}" if game_data['DK_HomeML'] > 0 else f"{game_data['DK_HomeML']}"
     },
     {
         "Sportsbook": "FanDuel 🔵", 
-        "Over/Under Line": f"{fd_ou}", 
-        f"{away_team} Moneyline": f"{fd_away:+}" if fd_away > 0 else f"{fd_away}",
-        f"{home_team} Moneyline": f"{fd_home:+}" if fd_home > 0 else f"{fd_home}"
+        "Over/Under Line": f"{game_data['FD_OU']}", 
+        f"{away_team} Moneyline": f"{game_data['FD_AwayML']:+}" if game_data['FD_AwayML'] > 0 else f"{game_data['FD_AwayML']}",
+        f"{home_team} Moneyline": f"{game_data['FD_HomeML']:+}" if game_data['FD_HomeML'] > 0 else f"{game_data['FD_HomeML']}"
     },
     {
         "Sportsbook": "BetMGM 🦁", 
-        "Over/Under Line": f"{mgm_ou}", 
-        f"{away_team} Moneyline": f"{mgm_away:+}" if mgm_away > 0 else f"{mgm_away}",
-        f"{home_team} Moneyline": f"{mgm_home:+}" if mgm_home > 0 else f"{mgm_home}"
+        "Over/Under Line": f"{game_data['MGM_OU']}", 
+        f"{away_team} Moneyline": f"{game_data['MGM_AwayML']:+}" if game_data['MGM_AwayML'] > 0 else f"{game_data['MGM_AwayML']}",
+        f"{home_team} Moneyline": f"{game_data['MGM_HomeML']:+}" if game_data['MGM_HomeML'] > 0 else f"{game_data['MGM_HomeML']}"
     }
 ]
 st.dataframe(pd.DataFrame(odds_matrix_data).set_index("Sportsbook"), use_container_width=True)
@@ -290,7 +326,10 @@ raw_home_score = (home_rpg * (p1_efx / 4.00)) * park_factor
 projected_home_runs = round(raw_home_score + ((away_bp_whip - 1.25) * 1.50), 2)
 
 calculated_expected_total = round(projected_away_runs + projected_home_runs, 2)
-calculated_edge = round(calculated_expected_total - dk_ou, 2)
+
+baseline_book_ou = game_data['DK_OU']
+baseline_book_away_ml = game_data['DK_AwayML']
+calculated_edge = round(calculated_expected_total - baseline_book_ou, 2)
 
 away_exponent = projected_away_runs ** 1.83
 home_exponent = projected_home_runs ** 1.83
@@ -303,10 +342,10 @@ else:
     derived_away_ml = int(100 * (model_away_win_prob / (1 - model_away_win_prob)))
     derived_home_ml = int(-100 * ((1 - model_away_win_prob) / model_away_win_prob))
 
-if dk_away < 0:
-    vegas_away_prob = abs(dk_away) / (abs(dk_away) + 100)
+if baseline_book_away_ml < 0:
+    vegas_away_prob = abs(baseline_book_away_ml) / (abs(baseline_book_away_ml) + 100)
 else:
-    vegas_away_prob = 100 / (dk_away + 100)
+    vegas_away_prob = 100 / (baseline_book_away_ml + 100)
 ml_probability_edge = round((model_away_win_prob - vegas_away_prob) * 100, 1)
 
 st.info(f"🏟️ Venue: **{venue_metadata['Name']}** | Multi-Variable Park Factor Mod: `{park_factor:.2f}`")
@@ -320,4 +359,30 @@ with val_col3:
     st.metric(label="Calculated Game Total", value=f"{calculated_expected_total} Runs", delta=f"O/U Margin: {calculated_edge:+} Runs")
 
 st.write("#### 🎯 Execution Signals")
-sig_col1, sig
+sig_col1, sig_col2 = st.columns(2)
+
+with sig_col1:
+    st.write("**Total Runs Directive:**")
+    if calculated_edge >= 0.75:
+        st.success(f"🔥 **OVER {baseline_book_ou}**\n\nModel projects {calculated_expected_total} runs. Clear mathematical edge against market totals.")
+    elif calculated_edge <= -0.75:
+        st.info(f"❄️ **UNDER {baseline_book_ou}**\n\nModel projects {calculated_expected_total} runs. Strong pitching metrics favor the UNDER.")
+    else:
+        st.warning("⚠️ **TOTALS PASS**\n\nThe analytical matrix sits flat against the baseline line market numbers.")
+
+with sig_col2:
+    st.write("**Match Winner Side Directive:**")
+    if ml_probability_edge >= 3.5:
+        st.success(f"🔥 **SIDE: {away_team} MONEYLINE**\n\nModel win expectancy is {model_away_win_prob*100:.1f}%. Premium variance of +{ml_probability_edge}% against books.")
+    elif ml_probability_edge <= -3.5:
+        st.success(f"🔥 **SIDE: {home_team} MONEYLINE**\n\nModel win expectancy is {(1-model_away_win_prob)*100:.1f}%. Premium variance of +{abs(ml_probability_edge)}% against books.")
+    else:
+        st.warning("⚠️ **SIDES PASS**\n\nSportsbook market pricing matches true team win probability tracks.")
+
+st.markdown("""
+---
+<div style="text-align: center; color: #64748b; font-size: 11px; padding: 10px;">
+    ⚠️ <strong>Disclaimer:</strong> Operational comparison tools are presented purely for informational tracking purposes. DiamondTotals does not accept wagers or process real money gaming. 
+    <br>Must be 21+ to gamble. If you or someone you know has a gambling problem, call <strong>1-800-GAMBLER</strong>.
+</div>
+""", unsafe_allow_html=True)
