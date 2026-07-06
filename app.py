@@ -45,7 +45,7 @@ TEAM_METRICS = {
     "PIT": {"ParkFactor": 1.01, "BullpenWHIP": 1.40, "OffenseRPG": 5.16, "Name": "Pirates (PNC Park)", "FullName": "PITTSBURGH PIRATES"},
     "CHC": {"ParkFactor": 1.02, "BullpenWHIP": 1.28, "OffenseRPG": 5.04, "Name": "Cubs (Wrigley Field)", "FullName": "CHICAGO CUBS"},
     "MIN": {"ParkFactor": 1.01, "BullpenWHIP": 1.57, "OffenseRPG": 4.91, "Name": "Twins (Target Field)", "FullName": "MINNESOTA TWINS"},
-    "NYY": {"ParkFactor": 1.00, "BullpenWHIP": 1.20, "OffenseRPG": 4.85, "Name": "Yankees (Yankee Stadium)", "FullName": "NEW YORK YANKEES"},
+    "NYY": {"ParkFactor": 1.00, "BullpenWHIP": 1.20, "OffenseRPG": 4.85, "Yankee Stadium": "Yankees", "FullName": "NEW YORK YANKEES"},
     "COL": {"ParkFactor": 1.31, "BullpenWHIP": 1.49, "OffenseRPG": 4.85, "Name": "Rockies (Coors Field)", "FullName": "COLORADO ROCKIES"},
     "ATL": {"ParkFactor": 0.88, "BullpenWHIP": 1.09, "OffenseRPG": 4.74, "Name": "Braves (Truist Park)", "FullName": "ATLANTA BRAVES"},
     "CWS": {"ParkFactor": 1.01, "BullpenWHIP": 1.35, "OffenseRPG": 4.78, "Name": "White Sox (Guaranteed Rate)", "FullName": "CHICAGO WHITE SOX"},
@@ -76,7 +76,6 @@ TRANSLATION_MAP = {
     "OAK": "OAK", "WSH": "WSH", "ARI": "AZ", "ANA": "LAA", "LOS": "LAD"
 }
 
-# --- 3. LIVE EXTRACTORS FOR STATISTICS AND ODDS FIELDS ---
 def fetch_live_player_stats(player_id):
     url = f"https://statsapi.mlb.com/api/v1/people/{player_id}/stats?stats=season&group=pitching"
     try:
@@ -135,11 +134,10 @@ def fetch_verified_daily_slate():
                 away_p_data = teams.get("away", {}).get("probablePitcher", {})
                 home_p_data = teams.get("home", {}).get("probablePitcher", {})
                 
-                # FIXED: Precise mid-season metric baseline for odds engine fallbacks
                 away_rpg_meta = TEAM_METRICS.get(away_team, {"OffenseRPG": 4.50}).get("OffenseRPG")
                 home_rpg_meta = TEAM_METRICS.get(home_team, {"OffenseRPG": 4.50}).get("OffenseRPG")
                 
-                calc_ou_base = 8.5 if (away_rpg_meta + home_rpg_meta) < 10 else 9.5
+                calc_ou_base = 8.5
                 calc_away_ml = -135 if away_rpg_meta > home_rpg_meta else 122
                 calc_home_ml = 115 if calc_away_ml < 0 else -145
                 
@@ -149,17 +147,17 @@ def fetch_verified_daily_slate():
                     "DK_HomeML": calc_home_ml, "FD_HomeML": calc_home_ml + 6, "MGM_HomeML": calc_home_ml - 2
                 }
                 
-                # FIXED: Strong containment text mapping block ensuring name conversions find matches
                 away_full = TEAM_METRICS.get(away_team, {}).get("FullName", "AWAY").upper()
                 home_full = TEAM_METRICS.get(home_team, {}).get("FullName", "HOME").upper()
                 
                 matching_game = None
-                for g in live_odds_feed:
-                    feed_home = str(g.get("home_team", "")).upper()
-                    feed_away = str(g.get("away_team", "")).upper()
-                    if (home_full in feed_home or feed_home in home_full) or (away_full in feed_away or feed_away in away_full):
-                        matching_game = g
-                        break
+                if live_odds_feed:
+                    for g in live_odds_feed:
+                        feed_home = str(g.get("home_team", "")).upper()
+                        feed_away = str(g.get("away_team", "")).upper()
+                        if (home_full in feed_home or feed_home in home_full) or (away_full in feed_away or feed_away in away_full):
+                            matching_game = g
+                            break
                 
                 if matching_game:
                     for book in matching_game.get("bookmakers", []):
@@ -203,7 +201,7 @@ def fetch_verified_daily_slate():
 active_slate = fetch_verified_daily_slate()
 
 if not active_slate:
-    st.warning("⚠️ Reading baseline schedule matrix to populate board profiles...")
+    st.warning("⚠️ Reading slate configurations...")
     active_slate = [{
         "Label": "⚾ PHI (Cristopher Sánchez) @ KC (Noah Cameron)",
         "AwaySP": "Cristopher Sánchez", "AwayID": 665984, "AwayTeam": "PHI",
@@ -282,3 +280,124 @@ plt_ax.set_theta_direction(-1)
 plt.xticks(angles[:-1], labels, color='#f8fafc', size=8, fontweight='bold')
 plt.yticks([2, 4, 6, 8, 10], ["2", "4", "6", "8", "10"], color="#64748b", size=6)
 plt.ylim(0, 10)
+plt_ax.grid(color='#334155', linestyle='--', linewidth=0.5)
+plt_ax.legend(loc='upper right', bbox_to_anchor=(1.2, 1.1), facecolor='#1e293b', edgecolor='#334155', labelcolor='#ffffff', prop={'size': 8})
+st.pyplot(fig)
+
+# --- 7. LIVE SPORTSBOOK ODDS COMPARISON MATRIX ---
+st.write("### 3. Live Sportsbook Market Lines Comparison")
+st.write("Compare multi-bookmaker totals and moneylines to target optimal price inefficiencies.")
+
+odds_matrix_data = [
+    {
+        "Sportsbook": "DraftKings 👑", 
+        "Over/Under Line": f"{game_data['DK_OU']}", 
+        f"{away_team} Moneyline": f"{game_data['DK_AwayML']:+}" if game_data['DK_AwayML'] > 0 else f"{game_data['DK_AwayML']}",
+        f"{home_team} Moneyline": f"{game_data['DK_HomeML']:+}" if game_data['DK_HomeML'] > 0 else f"{game_data['DK_HomeML']}"
+    },
+    {
+        "Sportsbook": "FanDuel 🔵", 
+        "Over/Under Line": f"{game_data['FD_OU']}", 
+        f"{away_team} Moneyline": f"{game_data['FD_AwayML']:+}" if game_data['FD_AwayML'] > 0 else f"{game_data['FD_AwayML']}",
+        f"{home_team} Moneyline": f"{game_data['FD_HomeML']:+}" if game_data['FD_HomeML'] > 0 else f"{game_data['FD_HomeML']}"
+    },
+    {
+        "Sportsbook": "BetMGM 🦁", 
+        "Over/Under Line": f"{game_data['MGM_OU']}", 
+        f"{away_team} Moneyline": f"{game_data['MGM_AwayML']:+}" if game_data['MGM_AwayML'] > 0 else f"{game_data['MGM_AwayML']}",
+        f"{home_team} Moneyline": f"{game_data['MGM_HomeML']:+}" if game_data['MGM_HomeML'] > 0 else f"{game_data['MGM_HomeML']}"
+    }
+]
+st.dataframe(pd.DataFrame(odds_matrix_data).set_index("Sportsbook"), use_container_width=True)
+
+# --- 8. DATA REFERENCE METRICS PANEL ---
+st.write("### 4. Structural Model Data Reference Matrix")
+venue_metadata = TEAM_METRICS.get(home_team, {"ParkFactor": 1.00, "BullpenWHIP": 1.25, "OffenseRPG": 4.40, "Name": f"{home_team} Stadium"})
+away_metadata = TEAM_METRICS.get(away_team, {"ParkFactor": 1.00, "BullpenWHIP": 1.25, "OffenseRPG": 4.40, "Name": f"{away_team} Club"})
+
+park_factor = venue_metadata["ParkFactor"]
+away_rpg = away_metadata["OffenseRPG"]
+home_rpg = venue_metadata["OffenseRPG"]
+away_bp_whip = away_metadata["BullpenWHIP"]
+home_bp_whip = venue_metadata["BullpenWHIP"]
+
+col_g1, col_g2 = st.columns(2)
+with col_g1:
+    st.write(pd.DataFrame([{"Team": away_team, "Offense RPG": away_rpg, "Bullpen WHIP": away_bp_whip, "Live ERA": profile1['ERA'], "Calculated SIERA": profile1['SIERA']}]).T.rename(columns={0: "Away Baseline"}))
+with col_g2:
+    st.write(pd.DataFrame([{"Team": home_team, "Offense RPG": home_rpg, "Bullpen WHIP": home_bp_whip, "Live ERA": profile2['ERA'], "Calculated SIERA": profile2['SIERA']}]).T.rename(columns={0: "Home Baseline"}))
+
+# --- 9. MODEL EXECUTION PROJECTIONS & SIGNALS ---
+st.write("### 5. Final DiamondTotals Execution Output")
+
+p1_efx = (profile1['SIERA'] + profile1['xFIP']) / 2
+p2_fx = (profile2['SIERA'] + profile2['xFIP']) / 2
+
+raw_away_score = (away_rpg * (p2_fx / 4.00)) * park_factor
+projected_away_runs = round(raw_away_score + ((home_bp_whip - 1.25) * 1.50), 2)
+
+raw_home_score = (home_rpg * (p1_efx / 4.00)) * park_factor
+projected_home_runs = round(raw_home_score + ((away_bp_whip - 1.25) * 1.50), 2)
+
+calculated_expected_total = round(projected_away_runs + projected_home_runs, 2)
+
+baseline_book_ou = game_data['DK_OU']
+baseline_book_away_ml = game_data['DK_AwayML']
+calculated_edge = round(calculated_expected_total - baseline_book_ou, 2)
+
+away_exponent = projected_away_runs ** 1.83
+home_exponent = projected_home_runs ** 1.83
+model_away_win_prob = away_exponent / (away_exponent + home_exponent)
+
+if model_away_win_prob >= 0.50:
+    derived_away_ml = int(-100 * (model_away_win_prob / (1 - model_away_win_prob)))
+    derived_home_ml = int(100 * ((1 - model_away_win_prob) / model_away_win_prob))
+else:
+    derived_away_ml = int(100 * (model_away_win_prob / (1 - model_away_win_prob)))
+    derived_home_ml = int(-100 * ((1 - model_away_win_prob) / model_away_win_prob))
+
+if baseline_book_away_ml < 0:
+    vegas_away_prob = abs(baseline_book_away_ml) / (abs(baseline_book_away_ml) + 100)
+else:
+    vegas_away_prob = 100 / (baseline_book_away_ml + 100)
+ml_probability_edge = round((model_away_win_prob - vegas_away_prob) * 100, 1)
+
+st.info(f"🏟️ Venue: **{venue_metadata['Name']}** | Multi-Variable Park Factor Mod: `{park_factor:.2f}`")
+
+val_col1, val_col2, val_col3 = st.columns(3)
+with val_col1:
+    st.metric(label=f"Projected {away_team} Total", value=f"{projected_away_runs} Runs", delta=f"Model ML: {derived_away_ml:+}" if derived_away_ml > 0 else f"Model ML: {derived_away_ml}")
+with val_col2:
+    st.metric(label=f"Projected {home_team} Total", value=f"{projected_home_runs} Runs", delta=f"Model ML: {derived_home_ml:+}" if derived_home_ml > 0 else f"Model ML: {derived_home_ml}")
+with val_col3:
+    st.metric(label="Calculated Game Total", value=f"{calculated_expected_total} Runs", delta=f"O/U Margin: {calculated_edge:+} Runs")
+
+st.write("#### 🎯 Execution Signals")
+sig_col1, sig_col2 = st.columns(2)
+
+with sig_col1:
+    st.write("**Total Runs Directive:**")
+    if calculated_edge >= 0.75:
+        st.success(f"🔥 **OVER {baseline_book_ou}**\n\nModel projects {calculated_expected_total} runs. Clear mathematical edge against market totals.")
+    elif calculated_edge <= -0.75:
+        st.info(f"❄️ **UNDER {baseline_book_ou}**\n\nModel projects {calculated_expected_total} runs. Strong pitching metrics favor the UNDER.")
+    else:
+        st.warning("⚠️ **TOTALS PASS**\n\nThe analytical matrix sits flat against the baseline line market numbers.")
+
+with sig_col2:
+    st.write("**Match Winner Side Directive:**")
+    if ml_probability_edge >= 3.5:
+        st.success(f"🔥 **SIDE: {away_team} MONEYLINE**\n\nModel win expectancy is {model_away_win_prob*100:.1f}%. Premium variance of +{ml_probability_edge}% against books.")
+    elif ml_probability_edge <= -3.5:
+        st.success(f"🔥 **SIDE: {home_team} MONEYLINE**\n\nModel win expectancy is {(1-model_away_win_prob)*100:.1f}%. Premium variance of +{abs(ml_probability_edge)}% against books.")
+    else:
+        st.warning("⚠️ **SIDES PASS**\n\nSportsbook market pricing matches true team win probability tracks.")
+
+# --- 10. FIXED COMPLIANCE FOOTER BLOCK ---
+st.markdown("""
+---
+<div style="text-align: center; color: #64748b; font-size: 11px; padding: 10px;">
+    ⚠️ <strong>Disclaimer:</strong> Operational comparison tools are presented purely for informational tracking purposes. DiamondTotals does not accept wagers or process real money gaming. 
+    <br>Must be 21+ to gamble. If you or someone you know has a gambling problem, call <strong>1-800-GAMBLER</strong>.
+</div>
+""", unsafe_allow_html=True)
