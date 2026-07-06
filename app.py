@@ -7,7 +7,7 @@ from datetime import datetime
 
 # --- 1. CONFIGURATION SEED INPUTS ---
 # Replace the string below with the unique token received from the-odds-api.com
-ODDS_API_KEY = ee1c905aa44500ef2bae248b2c415ae5
+ODDS_API_KEY = "ee1c905aa44500ef2bae248b2c415ae5"
 st.set_page_config(page_title="DiamondTotals | Live Slate Model", layout="centered")
 
 st.markdown("""
