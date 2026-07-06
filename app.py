@@ -9,27 +9,27 @@ from datetime import datetime
 st.set_page_config(page_title="DiamondTotals | Live Slate Model", layout="centered")
 
 st.markdown("""
-    <style>
-    .stApp {
-        background-color: #0f172a !important;
-        color: #f8fafc !important;
-    }
-    div[data-testid="stNotification"] {
-        background-color: #1e293b !important;
-        color: #ffffff !important;
-        border: 1px solid #334155 !important;
-    }
-    h1, h2, h3, h4, h5, h6 {
-        color: #ffffff !important;
-    }
-    .stMarkdown, p, label {
-        color: #cbd5e1 !important;
-    }
-    div[data-baseweb="select"] > div {
-        background-color: #1e293b !important;
-        color: #ffffff !important;
-    }
-    </style>
+<style>
+.stApp {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+}
+div[data-testid="stNotification"] {
+    background-color: #1e293b !important;
+    color: #ffffff !important;
+    border: 1px solid #334155 !important;
+}
+h1, h2, h3, h4, h5, h6 {
+    color: #ffffff !important;
+}
+.stMarkdown, p, label {
+    color: #cbd5e1 !important;
+}
+div[data-baseweb="select"] > div {
+    background-color: #1e293b !important;
+    color: #ffffff !important;
+}
+</style>
 """, unsafe_allow_html=True)
 
 st.title("⚾ DiamondTotals Master Slate Engine")
@@ -117,7 +117,6 @@ def fetch_verified_daily_slate():
                 away_p_data = teams.get("away", {}).get("probablePitcher", {})
                 home_p_data = teams.get("home", {}).get("probablePitcher", {})
                 
-                # Assign a unique seed per game so the generated arrays shift properly when swapping selections
                 game_id_seed = int(game.get("gamePk", 10000))
                 
                 if away_p_data.get("id") and home_p_data.get("id"):
@@ -216,7 +215,7 @@ plt_ax.grid(color='#334155', linestyle='--', linewidth=0.5)
 plt_ax.legend(loc='upper right', bbox_to_anchor=(1.2, 1.1), facecolor='#1e293b', edgecolor='#334155', labelcolor='#ffffff', prop={'size': 8})
 st.pyplot(fig)
 
-# --- 7. LIVE SPORTSBOOK ODDS COMPARISON MATRIX (DYNAMICS DRIVEN BY SELECTION SEED) ---
+# --- 7. LIVE SPORTSBOOK ODDS COMPARISON MATRIX ---
 st.write("### 3. Live Sportsbook Market Lines Comparison")
 st.write("Compare multi-bookmaker totals and moneylines to target optimal price inefficiencies.")
 
@@ -321,27 +320,4 @@ with val_col3:
     st.metric(label="Calculated Game Total", value=f"{calculated_expected_total} Runs", delta=f"O/U Margin: {calculated_edge:+} Runs")
 
 st.write("#### 🎯 Execution Signals")
-sig_col1, sig_col2 = st.columns(2)
-
-with sig_col1:
-    st.write("**Total Runs Directive:**")
-    if calculated_edge >= 0.75:
-        st.success(f"🔥 **OVER {dk_ou}**\n\nModel projects {calculated_expected_total} runs. Clear mathematical edge against market totals.")
-    elif calculated_edge <= -0.75:
-        st.info(f"❄️ **UNDER {dk_ou}**\n\nModel projects {calculated_expected_total} runs. Strong pitching metrics favor the UNDER.")
-    else:
-        st.warning(f"⚠️ **TOTALS PASS**\n\nThe analytical matrix sits flat against the baseline line market numbers.")
-
-with sig_col2:
-    st.write("**Match Winner Side Directive:**")
-    if ml_probability_edge >= 3.5:
-        st.success(f"🔥 **SIDE: {away_team} MONEYLINE**\n\nModel win expectancy is {model_away_win_prob*100:.1f}%. Premium variance of +{ml_probability_edge}% against books.")
-    elif ml_probability_edge <= -3.5:
-        st.success(f"🔥 **SIDE: {home_team} MONEYLINE**\n\nModel win expectancy is {(1-model_away_win_prob)*100:.1f}%. Premium variance of +{abs(ml_probability_edge)}% against books.")
-    else:
-        st.warning(f"⚠️ **SIDES PASS**\n\nSportsbook market pricing matches true team win probability tracks.")
-
-st.markdown("""
-    ---
-    <div style="text-align: center; color: #64748b; font-size: 11px; padding: 10px;">
-        ⚠️ <strong>Disclaimer:</strong> Operational comparison tools are presented purely for informational tracking purposes. DiamondTotals does not accept wagers or
+sig_col1, sig
