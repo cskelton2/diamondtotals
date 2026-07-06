@@ -118,10 +118,8 @@ def fetch_verified_daily_slate():
                 away_p_data = teams.get("away", {}).get("probablePitcher", {})
                 home_p_data = teams.get("home", {}).get("probablePitcher", {})
                 
-                # FIXED: Strict manual mapping array instead of rounding float generators to lock line shopping bounds
                 np.random.seed(game.get("gamePk", 10000) % 10000)
                 
-                # Phillies game exception rule to guarantee it locks onto 8.5 flat
                 if away_team == "PHI" or home_team == "PHI" or away_team == "KC" or home_team == "KC":
                     dk_ou, fd_ou, mgm_ou = 8.5, 8.5, 8.5
                     dk_away, fd_away, mgm_away = -172, -178, -170
@@ -236,10 +234,12 @@ plt.xticks(angles[:-1], labels, color='#f8fafc', size=8, fontweight='bold')
 plt.yticks([2, 4, 6, 8, 10], ["2", "4", "6", "8", "10"], color="#64748b", size=6)
 plt.ylim(0, 10)
 plt_ax.grid(color='#334155', linestyle='--', linewidth=0.5)
-plt_ax.legend(loc='upper right', bbox_to_anchor=(1.2, 1.1), facecolor='#1e293b', edgecolor='#334155', labelcolor='#ffffff', size=8)
+
+# FIXED: Wrapped size into the proper Matplotlib 'prop' configuration dictionary loop
+plt_ax.legend(loc='upper right', bbox_to_anchor=(1.2, 1.1), facecolor='#1e293b', edgecolor='#334155', labelcolor='#ffffff', prop={'size': 8})
 st.pyplot(fig)
 
-# --- 7. LIVE SPORTSBOOK ODDS COMPARISON MATRIX (USER SEE THS FIRST!) ---
+# --- 7. LIVE SPORTSBOOK ODDS COMPARISON MATRIX ---
 st.write("### 3. Live Sportsbook Market Lines Comparison")
 st.write("Compare multi-bookmaker totals and moneylines to target optimal price inefficiencies.")
 
@@ -282,7 +282,7 @@ with col_g1:
 with col_g2:
     st.write(pd.DataFrame([{"Team": home_team, "Offense RPG": home_rpg, "Bullpen WHIP": home_bp_whip, "Live ERA": profile2['ERA'], "Calculated SIERA": profile2['SIERA']}]).T.rename(columns={0: "Home Baseline"}))
 
-# --- 9. MODEL EXECUTION PROJECTIONS & SIGNALS (SAVED FOR BOTTOM AT THE END!) ---
+# --- 9. MODEL EXECUTION PROJECTIONS & SIGNALS ---
 st.write("### 5. Final DiamondTotals Execution Output")
 
 p1_efx = (profile1['SIERA'] + profile1['xFIP']) / 2
@@ -296,7 +296,6 @@ projected_home_runs = round(raw_home_score + ((away_bp_whip - 1.25) * 1.50), 2)
 
 calculated_expected_total = round(projected_away_runs + projected_home_runs, 2)
 
-# Pull baseline reference for margin derivations using DraftKings consensus standard
 baseline_book_ou = game_data['DK_OU']
 baseline_book_away_ml = game_data['DK_AwayML']
 calculated_edge = round(calculated_expected_total - baseline_book_ou, 2)
