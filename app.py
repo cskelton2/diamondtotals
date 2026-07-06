@@ -120,10 +120,8 @@ def fetch_verified_daily_slate():
                 
                 np.random.seed(game.get("gamePk", 10000) % 10000)
                 
-                # FIXED: Force exact unrounded float variables for totals strings
                 if away_team in ["PHI", "KC"] or home_team in ["PHI", "KC"]:
                     dk_ou, fd_ou, mgm_ou = 8.5, 8.5, 8.5
-                    # FIXED: Authentic American odds formatting limits applied cleanly
                     dk_away, fd_away, mgm_away = -172, -178, -170
                     dk_home, fd_home, mgm_home = 144, 150, 142
                 else:
@@ -211,4 +209,94 @@ profile2 = build_composite_profile(game_data["HomeSP"], game_data["HomeTeam"], r
 away_team = profile1['Team']
 home_team = profile2['Team']
 
-# --- 6. THE GRAPHICAL
+# --- 6. THE GRAPHICAL MATCHUP SNOWFLAKE ---
+st.write("### 2. Pitching Snowflake Profile Matrix")
+labels = ['Strikeout Power', 'Walk Suppression', 'xFIP Floor', 'SIERA Rating', 'Contact Control']
+num_vars = len(labels)
+angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
+angles += angles[:1]
+
+fig, plt_ax = plt.subplots(figsize=(4.5, 4.5), subplot_kw=dict(polar=True))
+fig.patch.set_facecolor('#0f172a')
+plt_ax.set_facecolor('#1e293b')
+
+stats1 = profile1['Scores'] + profile1['Scores'][:1]
+plt_ax.plot(angles, stats1, color='#10b981', linewidth=2, label=f"Away: {profile1['Name']} ({away_team})")
+plt_ax.fill(angles, stats1, color='#10b981', alpha=0.15)
+
+stats2 = profile2['Scores'] + profile2['Scores'][:1]
+plt_ax.plot(angles, stats2, color='#3b82f6', linewidth=2, label=f"Home: {profile2['Name']} ({home_team})")
+plt_ax.fill(angles, stats2, color='#3b82f6', alpha=0.15)
+
+plt_ax.set_theta_offset(np.pi / 2)
+plt_ax.set_theta_direction(-1)
+plt.xticks(angles[:-1], labels, color='#f8fafc', size=8, fontweight='bold')
+plt.yticks([2, 4, 6, 8, 10], ["2", "4", "6", "8", "10"], color="#64748b", size=6)
+plt.ylim(0, 10)
+plt_ax.grid(color='#334155', linestyle='--', linewidth=0.5)
+plt_ax.legend(loc='upper right', bbox_to_anchor=(1.2, 1.1), facecolor='#1e293b', edgecolor='#334155', labelcolor='#ffffff', prop={'size': 8})
+st.pyplot(fig)
+
+# --- 7. LIVE SPORTSBOOK ODDS COMPARISON MATRIX ---
+st.write("### 3. Live Sportsbook Market Lines Comparison")
+st.write("Compare multi-bookmaker totals and moneylines to target optimal price inefficiencies.")
+
+odds_matrix_data = [
+    {
+        "Sportsbook": "DraftKings 👑", 
+        "Over/Under Line": f"{game_data['DK_OU']}", 
+        f"{away_team} Moneyline": f"{game_data['DK_AwayML']:+}" if game_data['DK_AwayML'] > 0 else f"{game_data['DK_AwayML']}",
+        f"{home_team} Moneyline": f"{game_data['DK_HomeML']:+}" if game_data['DK_HomeML'] > 0 else f"{game_data['DK_HomeML']}"
+    },
+    {
+        "Sportsbook": "FanDuel 🔵", 
+        "Over/Under Line": f"{game_data['FD_OU']}", 
+        f"{away_team} Moneyline": f"{game_data['FD_AwayML']:+}" if game_data['FD_AwayML'] > 0 else f"{game_data['FD_AwayML']}",
+        f"{home_team} Moneyline": f"{game_data['FD_HomeML']:+}" if game_data['FD_HomeML'] > 0 else f"{game_data['FD_HomeML']}"
+    },
+    {
+        "Sportsbook": "BetMGM 🦁", 
+        "Over/Under Line": f"{game_data['MGM_OU']}", 
+        f"{away_team} Moneyline": f"{game_data['MGM_AwayML']:+}" if game_data['MGM_AwayML'] > 0 else f"{game_data['MGM_AwayML']}",
+        f"{home_team} Moneyline": f"{game_data['MGM_HomeML']:+}" if game_data['MGM_HomeML'] > 0 else f"{game_data['MGM_HomeML']}"
+    }
+]
+st.dataframe(pd.DataFrame(odds_matrix_data).set_index("Sportsbook"), use_container_width=True)
+
+# --- 8. DATA REFERENCE METRICS PANEL ---
+st.write("### 4. Structural Model Data Reference Matrix")
+venue_metadata = TEAM_METRICS.get(home_team, {"ParkFactor": 1.00, "BullpenWHIP": 1.25, "OffenseRPG": 4.40, "Name": f"{home_team} Stadium"})
+away_metadata = TEAM_METRICS.get(away_team, {"ParkFactor": 1.00, "BullpenWHIP": 1.25, "OffenseRPG": 4.40, "Name": f"{away_team} Club"})
+
+park_factor = venue_metadata["ParkFactor"]
+away_rpg = away_metadata["OffenseRPG"]
+home_rpg = venue_metadata["OffenseRPG"]
+away_bp_whip = away_metadata["BullpenWHIP"]
+home_bp_whip = venue_metadata["BullpenWHIP"]
+
+col_g1, col_g2 = st.columns(2)
+with col_g1:
+    st.write(pd.DataFrame([{"Team": away_team, "Offense RPG": away_rpg, "Bullpen WHIP": away_bp_whip, "Live ERA": profile1['ERA'], "Calculated SIERA": profile1['SIERA']}]).T.rename(columns={0: "Away Baseline"}))
+with col_g2:
+    st.write(pd.DataFrame([{"Team": home_team, "Offense RPG": home_rpg, "Bullpen WHIP": home_bp_whip, "Live ERA": profile2['ERA'], "Calculated SIERA": profile2['SIERA']}]).T.rename(columns={0: "Home Baseline"}))
+
+# --- 9. MODEL EXECUTION PROJECTIONS & SIGNALS ---
+st.write("### 5. Final DiamondTotals Execution Output")
+
+p1_efx = (profile1['SIERA'] + profile1['xFIP']) / 2
+p2_fx = (profile2['SIERA'] + profile2['xFIP']) / 2
+
+raw_away_score = (away_rpg * (p2_fx / 4.00)) * park_factor
+projected_away_runs = round(raw_away_score + ((home_bp_whip - 1.25) * 1.50), 2)
+
+raw_home_score = (home_rpg * (p1_efx / 4.00)) * park_factor
+projected_home_runs = round(raw_home_score + ((away_bp_whip - 1.25) * 1.50), 2)
+
+calculated_expected_total = round(projected_away_runs + projected_home_runs, 2)
+
+baseline_book_ou = game_data['DK_OU']
+baseline_book_away_ml = game_data['DK_AwayML']
+calculated_edge = round(calculated_expected_total - baseline_book_ou, 2)
+
+away_exponent = projected_away_runs ** 1.83
+home_exponent = projected_
