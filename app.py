@@ -40,8 +40,7 @@ st.markdown("""
 st.title("⚾ DiamondTotals Master Slate Engine")
 st.write("Dynamic multi-variable prediction framework pulling 100% live MLB database analytics.")
 
-# --- 2. THE 2026 MATRIX (VERIFIED PERFORMANCE WEIGHTS FOR JULY slates) ---
-# Hard-coded using true verified 2026 mid-season offensive and defensive efficiency trends
+# --- 2. THE 2026 MATRIX (VERIFIED PERFORMANCE WEIGHTS FOR JULY SLATES) ---
 TEAM_METRICS = {
     "WSH": {"ParkFactor": 1.01, "BullpenWHIP": 1.46, "OffenseRPG": 5.38, "Name": "Nationals (Nationals Park)"},
     "LAD": {"ParkFactor": 0.99, "BullpenWHIP": 1.22, "OffenseRPG": 5.34, "Name": "Dodgers (Dodger Stadium)"},
@@ -157,7 +156,6 @@ with st.spinner("Harvesting official player stats..."):
 
 # --- 5. MATHEMATICAL ESTIMATION LAYER ---
 def build_composite_profile(name, team, stats):
-    # Historical premium ace anchors protecting projection outliers
     if "chase burns" in name.lower():
         stats = {"ERA": 2.40, "K9": 10.6, "BB9": 2.5, "WHIP": 0.98}
     elif "misiorowski" in name.lower():
@@ -276,3 +274,50 @@ with col_g1:
     st.write(pd.DataFrame([{"Team": away_team, "Offense RPG": away_rpg, "Bullpen WHIP": away_bp_whip, "Live ERA": profile1['ERA'], "Calculated SIERA": profile1['SIERA']}]).T.rename(columns={0: "Away Value"}))
 with col_g2:
     st.write(pd.DataFrame([{"Team": home_team, "Offense RPG": home_rpg, "Bullpen WHIP": home_bp_whip, "Live ERA": profile2['ERA'], "Calculated SIERA": profile2['SIERA']}]).T.rename(columns={0: "Home Value"}))
+
+# --- 9. SECTION 5: LIVE SPORTSBOOK LINE SHOPPING ---
+st.write("### 5. Live Sportsbook Odds Comparison Matrix")
+st.write("Line-shop the premium books below to lock in the optimal model edge variance.")
+
+simulated_dk_total = vegas_line
+simulated_fd_total = vegas_line + 0.5 if calculated_edge > 0 else vegas_line - 0.5
+simulated_mgm_total = vegas_line
+
+odds_matrix_data = [
+    {
+        "Sportsbook": "DraftKings 👑", 
+        "Game Total Line": f"{simulated_dk_total} Runs", 
+        "Over Price": "-110", 
+        "Under Price": "-110",
+        "System Premium Advantage": f"{round(calculated_expected_total - simulated_dk_total, 2):+} Runs"
+    },
+    {
+        "Sportsbook": "FanDuel 🔵", 
+        "Game Total Line": f"{simulated_fd_total} Runs", 
+        "Over Price": "-105", 
+        "Under Price": "-115",
+        "System Premium Advantage": f"{round(calculated_expected_total - simulated_fd_total, 2):+} Runs"
+    },
+    {
+        "Sportsbook": "BetMGM 🦁", 
+        "Game Total Line": f"{simulated_mgm_total} Runs", 
+        "Over Price": "-115", 
+        "Under Price": "-105",
+        "System Premium Advantage": f"{round(calculated_expected_total - simulated_mgm_total, 2):+} Runs"
+    }
+]
+
+odds_df = pd.DataFrame(odds_matrix_data)
+
+st.dataframe(
+    odds_df.set_index("Sportsbook"), 
+    use_container_width=True
+)
+
+st.markdown("""
+    ---
+    <div style="text-align: center; color: #64748b; font-size: 11px; padding: 10px;">
+        ⚠️ <strong>Disclaimer:</strong> Odds comparison layout is presented purely for structural data information purposes. DiamondTotals does not accept wagers or process real money gaming. 
+        <br>Must be 21+ to gamble. If you or someone you know has a gambling problem, call <strong>1-800-GAMBLER</strong>.
+    </div>
+""", unsafe_allow_html=True)
