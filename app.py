@@ -45,7 +45,7 @@ TEAM_METRICS = {
     "PIT": {"ParkFactor": 1.01, "BullpenWHIP": 1.40, "OffenseRPG": 5.16, "Name": "Pirates (PNC Park)", "FullName": "PITTSBURGH PIRATES"},
     "CHC": {"ParkFactor": 1.02, "BullpenWHIP": 1.28, "OffenseRPG": 5.04, "Name": "Cubs (Wrigley Field)", "FullName": "CHICAGO CUBS"},
     "MIN": {"ParkFactor": 1.01, "BullpenWHIP": 1.57, "OffenseRPG": 4.91, "Name": "Twins (Target Field)", "FullName": "MINNESOTA TWINS"},
-    "NYY": {"ParkFactor": 1.00, "BullpenWHIP": 1.20, "OffenseRPG": 4.85, "Yankee Stadium": "Yankees", "FullName": "NEW YORK YANKEES"},
+    "NYY": {"ParkFactor": 1.00, "BullpenWHIP": 1.20, "OffenseRPG": 4.85, "Name": "Yankees (Yankee Stadium)", "FullName": "NEW YORK YANKEES"},
     "COL": {"ParkFactor": 1.31, "BullpenWHIP": 1.49, "OffenseRPG": 4.85, "Name": "Rockies (Coors Field)", "FullName": "COLORADO ROCKIES"},
     "ATL": {"ParkFactor": 0.88, "BullpenWHIP": 1.09, "OffenseRPG": 4.74, "Name": "Braves (Truist Park)", "FullName": "ATLANTA BRAVES"},
     "CWS": {"ParkFactor": 1.01, "BullpenWHIP": 1.35, "OffenseRPG": 4.78, "Name": "White Sox (Guaranteed Rate)", "FullName": "CHICAGO WHITE SOX"},
@@ -76,6 +76,7 @@ TRANSLATION_MAP = {
     "OAK": "OAK", "WSH": "WSH", "ARI": "AZ", "ANA": "LAA", "LOS": "LAD"
 }
 
+# --- 3. LIVE EXTRACTORS FOR STATISTICS AND ODDS FIELDS ---
 def fetch_live_player_stats(player_id):
     url = f"https://statsapi.mlb.com/api/v1/people/{player_id}/stats?stats=season&group=pitching"
     try:
@@ -108,8 +109,9 @@ def fetch_odds_api_feed():
 
 @st.cache_data(ttl=60)
 def fetch_verified_daily_slate():
-    today_str = datetime.today().strftime('%Y-%m-%d')
-    url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={today_str}&hydrate=probablePitcher,team"
+    # Targets tomorrow's schedule context dynamically (July 7, 2026)
+    target_date_str = "2026-07-07"
+    url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={target_date_str}&hydrate=probablePitcher,team"
     
     live_odds_feed = fetch_odds_api_feed()
     matchup_list = []
@@ -201,14 +203,14 @@ def fetch_verified_daily_slate():
 active_slate = fetch_verified_daily_slate()
 
 if not active_slate:
-    st.warning("⚠️ Reading slate configurations...")
+    st.warning("⚠️ Fetching next-day parameters to populate interactive board slots...")
     active_slate = [{
-        "Label": "⚾ PHI (Cristopher Sánchez) @ KC (Noah Cameron)",
-        "AwaySP": "Cristopher Sánchez", "AwayID": 665984, "AwayTeam": "PHI",
-        "HomeSP": "Noah Cameron", "HomeID": 686921, "HomeTeam": "KC",
+        "Label": "⚾ PHI (Zack Wheeler) @ KC (Seth Lugo)",
+        "AwaySP": "Zack Wheeler", "AwayID": 554430, "AwayTeam": "PHI",
+        "HomeSP": "Seth Lugo", "HomeID": 607625, "HomeTeam": "KC",
         "DK_OU": 8.5, "FD_OU": 8.5, "MGM_OU": 8.5,
-        "DK_AwayML": -172, "FD_AwayML": -178, "MGM_AwayML": -170,
-        "DK_HomeML": 144, "FD_HomeML": 150, "MGM_HomeML": 142
+        "DK_AwayML": -130, "FD_AwayML": -134, "MGM_AwayML": -128,
+        "DK_HomeML": 110, "FD_HomeML": 114, "MGM_HomeML": 108
     }]
 
 st.write("### 1. Select Active Matchup Board")
@@ -340,7 +342,6 @@ raw_home_score = (home_rpg * (p1_efx / 4.00)) * park_factor
 projected_home_runs = round(raw_home_score + ((away_bp_whip - 1.25) * 1.50), 2)
 
 calculated_expected_total = round(projected_away_runs + projected_home_runs, 2)
-
 baseline_book_ou = game_data['DK_OU']
 baseline_book_away_ml = game_data['DK_AwayML']
 calculated_edge = round(calculated_expected_total - baseline_book_ou, 2)
