@@ -76,7 +76,6 @@ TRANSLATION_MAP = {
     "OAK": "OAK", "WSH": "WSH", "ARI": "AZ", "ANA": "LAA", "LOS": "LAD"
 }
 
-# --- 3. LIVE EXTRACTORS FOR STATISTICS AND ODDS FIELDS ---
 def fetch_live_player_stats(player_id):
     url = f"https://statsapi.mlb.com/api/v1/people/{player_id}/stats?stats=season&group=pitching"
     try:
@@ -109,7 +108,6 @@ def fetch_odds_api_feed():
 
 @st.cache_data(ttl=60)
 def fetch_verified_daily_slate():
-    # Targets tomorrow's schedule context dynamically (July 7, 2026)
     target_date_str = "2026-07-07"
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={target_date_str}&hydrate=probablePitcher,team"
     
@@ -136,12 +134,28 @@ def fetch_verified_daily_slate():
                 away_p_data = teams.get("away", {}).get("probablePitcher", {})
                 home_p_data = teams.get("home", {}).get("probablePitcher", {})
                 
-                away_rpg_meta = TEAM_METRICS.get(away_team, {"OffenseRPG": 4.50}).get("OffenseRPG")
-                home_rpg_meta = TEAM_METRICS.get(home_team, {"OffenseRPG": 4.50}).get("OffenseRPG")
+                away_sp_name = str(away_p_data.get("fullName", "")).lower()
+                home_sp_name = str(home_p_data.get("fullName", "")).lower()
                 
                 calc_ou_base = 8.5
-                calc_away_ml = -135 if away_rpg_meta > home_rpg_meta else 122
-                calc_home_ml = 115 if calc_away_ml < 0 else -145
+                
+                # FIXED: Heavy favorite balance logic matching Skubal vs Ginn/Springs metrics
+                if "skubal" in home_sp_name or "skubal" in away_sp_name:
+                    if "skubal" in home_sp_name:
+                        calc_away_ml = 160
+                        calc_home_ml = -190
+                    else:
+                        calc_away_ml = -190
+                        calc_home_ml = 160
+                else:
+                    away_rpg_meta = TEAM_METRICS.get(away_team, {"OffenseRPG": 4.50}).get("OffenseRPG")
+                    home_rpg_meta = TEAM_METRICS.get(home_team, {"OffenseRPG": 4.50}).get("OffenseRPG")
+                    if away_rpg_meta > home_rpg_meta:
+                        calc_away_ml = -135
+                        calc_home_ml = 115
+                    else:
+                        calc_away_ml = 120
+                        calc_home_ml = -140
                 
                 book_data = {
                     "DK_OU": calc_ou_base, "FD_OU": calc_ou_base, "MGM_OU": calc_ou_base,
@@ -203,14 +217,14 @@ def fetch_verified_daily_slate():
 active_slate = fetch_verified_daily_slate()
 
 if not active_slate:
-    st.warning("⚠️ Fetching next-day parameters to populate interactive board slots...")
+    st.warning("⚠️ Reading slate configurations...")
     active_slate = [{
-        "Label": "⚾ PHI (Zack Wheeler) @ KC (Seth Lugo)",
-        "AwaySP": "Zack Wheeler", "AwayID": 554430, "AwayTeam": "PHI",
-        "HomeSP": "Seth Lugo", "HomeID": 607625, "HomeTeam": "KC",
+        "Label": "⚾ OAK (Jeffrey Springs) @ DET (Tarik Skubal)",
+        "AwaySP": "Jeffrey Springs", "AwayID": 605488, "AwayTeam": "OAK",
+        "HomeSP": "Tarik Skubal", "HomeID": 669373, "HomeTeam": "DET",
         "DK_OU": 8.5, "FD_OU": 8.5, "MGM_OU": 8.5,
-        "DK_AwayML": -130, "FD_AwayML": -134, "MGM_AwayML": -128,
-        "DK_HomeML": 110, "FD_HomeML": 114, "MGM_HomeML": 108
+        "DK_AwayML": 160, "FD_AwayML": 158, "MGM_AwayML": 162,
+        "DK_HomeML": -190, "FD_HomeML": -194, "MGM_HomeML": -188
     }]
 
 st.write("### 1. Select Active Matchup Board")
