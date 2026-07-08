@@ -93,10 +93,9 @@ def fetch_live_player_stats(player_id):
         pass
     return {"ERA": 4.00, "K9": 8.5, "BB9": 3.0, "WHIP": 1.25}
 
+# FIXED: Re-engineered parsing layout map to properly target nested homeRecord and roadRecord fields
 def fetch_team_records_and_splits(team_id):
-    url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/stats?stats=seasonAdvanced&group=pitching"
     url_standings = "https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&season=2026"
-    
     profile = {"Record": "0-0", "DivRank": "N/A", "Home": "0-0", "Away": "0-0"}
     try:
         standings_data = requests.get(url_standings, timeout=5).json()
@@ -106,12 +105,12 @@ def fetch_team_records_and_splits(team_id):
                     profile["Record"] = f"{team_rec.get('wins')}-{team_rec.get('losses')}"
                     profile["DivRank"] = f"{team_rec.get('divisionRank')}"
                     
-                    for split in team_rec.get("records", {}).get("homeRecords", []):
-                        if split.get("type") == "home":
-                            profile["Home"] = f"{split.get('wins')}-{split.get('losses')}"
-                    for split in team_rec.get("records", {}).get("awayRecords", []):
-                        if split.get("type") == "away":
-                            profile["Away"] = f"{split.get('wins')}-{split.get('losses')}"
+                    # Target correct string parameters directly from backend records dictionary
+                    profile["Home"] = team_rec.get("homeRecord", {}).get("wins", 0), team_rec.get("homeRecord", {}).get("losses", 0)
+                    profile["Away"] = team_rec.get("awayRecord", {}).get("wins", 0), team_rec.get("awayRecord", {}).get("losses", 0)
+                    
+                    profile["Home"] = f"{team_rec.get('homeRecord', {}).get('wins', 0)}-{team_rec.get('homeRecord', {}).get('losses', 0)}"
+                    profile["Away"] = f"{team_rec.get('awayRecord', {}).get('wins', 0)}-{team_rec.get('awayRecord', {}).get('losses', 0)}"
                     return profile
     except Exception:
         pass
@@ -236,7 +235,7 @@ def fetch_verified_daily_slate():
         pass
     return matchup_list
 
-# --- 3. GAME SELECTOR LAYER ---
+# --- 4. GAME SELECTOR LAYER ---
 active_slate = fetch_verified_daily_slate()
 
 if not active_slate:
@@ -259,7 +258,6 @@ game_data = next(m for m in active_slate if m["Label"] == selected_game_str)
 away_t_code = game_data["AwayTeam"]
 home_t_code = game_data["HomeTeam"]
 
-# --- 4. NEW: LIVE TEAM STANDINGS AND SPLITS PANEL ---
 with st.spinner("Compiling live team division standings..."):
     away_id = TEAM_METRICS.get(away_t_code, {"ID": 110})["ID"]
     home_id = TEAM_METRICS.get(home_t_code, {"ID": 111})["ID"]
@@ -270,9 +268,9 @@ with st.spinner("Compiling live team division standings..."):
 st.write("#### 🏆 Divisional Standings & Context Split Matrix")
 split_col1, split_col2 = st.columns(2)
 with split_col1:
-    st.info(f"**Away: {away_t_code}**\n\n* Overall: `{away_splits['Record']}`\n* Div Rank: #{away_splits['DivRank']}\n* Away Split: `{away_splits['Away']}`")
+    st.info(f"**Away: {away_t_code}**\n\n* Overall Record: `{away_splits['Record']}`\n* Division Rank: #{away_splits['DivRank']}\n* Away Split Record: `{away_splits['Away']}`")
 with split_col2:
-    st.blueprint = st.info(f"**Home: {home_t_code}**\n\n* Overall: `{home_splits['Record']}`\n* Div Rank: #{home_splits['DivRank']}\n* Home Split: `{home_splits['Home']}`")
+    st.info(f"**Home: {home_t_code}**\n\n* Overall Record: `{home_splits['Record']}`\n* Division Rank: #{home_splits['DivRank']}\n* Home Split Record: `{home_splits['Home']}`")
 
 with st.spinner("Harvesting official player stats..."):
     raw_away_stats = fetch_live_player_stats(game_data["AwayID"])
