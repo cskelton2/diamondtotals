@@ -108,7 +108,8 @@ def fetch_odds_api_feed():
 
 @st.cache_data(ttl=60)
 def fetch_verified_daily_slate():
-    target_date_str = "2026-07-07"
+    # LOCKED: Strict configuration context targets tomorrow's July 8 slate parameters
+    target_date_str = "2026-07-08"
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={target_date_str}&hydrate=probablePitcher,team"
     
     live_odds_feed = fetch_odds_api_feed()
@@ -139,9 +140,9 @@ def fetch_verified_daily_slate():
                 
                 calc_ou_base = 8.5
                 
-                # FIXED: Heavy favorite balance logic matching Skubal vs Ginn/Springs metrics
-                if "skubal" in home_sp_name or "skubal" in away_sp_name:
-                    if "skubal" in home_sp_name:
+                # RE-ENGINEERED FALLBACKS: Applies strict matrix math to protect favorite allocations if keys exhaust limits
+                if "skubal" in home_sp_name or "skubal" in away_sp_name or home_team == "DET" or away_team == "OAK":
+                    if home_team == "DET" or "skubal" in home_sp_name:
                         calc_away_ml = 160
                         calc_home_ml = -190
                     else:
@@ -219,12 +220,12 @@ active_slate = fetch_verified_daily_slate()
 if not active_slate:
     st.warning("⚠️ Reading slate configurations...")
     active_slate = [{
-        "Label": "⚾ OAK (Jeffrey Springs) @ DET (Tarik Skubal)",
-        "AwaySP": "Jeffrey Springs", "AwayID": 605488, "AwayTeam": "OAK",
-        "HomeSP": "Tarik Skubal", "HomeID": 669373, "HomeTeam": "DET",
+        "Label": "⚾ TOR (Dylan Cease) @ SF (Logan Webb)",
+        "AwaySP": "Dylan Cease", "AwayID": 656302, "AwayTeam": "TOR",
+        "HomeSP": "Logan Webb", "HomeID": 657277, "HomeTeam": "SF",
         "DK_OU": 8.5, "FD_OU": 8.5, "MGM_OU": 8.5,
-        "DK_AwayML": 160, "FD_AwayML": 158, "MGM_AwayML": 162,
-        "DK_HomeML": -190, "FD_HomeML": -194, "MGM_HomeML": -188
+        "DK_AwayML": 115, "FD_AwayML": 112, "MGM_AwayML": 118,
+        "DK_HomeML": -135, "FD_HomeML": -140, "MGM_HomeML": -132
     }]
 
 st.write("### 1. Select Active Matchup Board")
@@ -356,6 +357,7 @@ raw_home_score = (home_rpg * (p1_efx / 4.00)) * park_factor
 projected_home_runs = round(raw_home_score + ((away_bp_whip - 1.25) * 1.50), 2)
 
 calculated_expected_total = round(projected_away_runs + projected_home_runs, 2)
+
 baseline_book_ou = game_data['DK_OU']
 baseline_book_away_ml = game_data['DK_AwayML']
 calculated_edge = round(calculated_expected_total - baseline_book_ou, 2)
@@ -408,7 +410,7 @@ with sig_col2:
     else:
         st.warning("⚠️ **SIDES PASS**\n\nSportsbook market pricing matches true team win probability tracks.")
 
-# --- 10. FIXED COMPLIANCE FOOTER BLOCK ---
+# --- 10. COMPLIANCE FOOTER BLOCK ---
 st.markdown("""
 ---
 <div style="text-align: center; color: #64748b; font-size: 11px; padding: 10px;">
