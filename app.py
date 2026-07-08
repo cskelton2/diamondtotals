@@ -62,7 +62,7 @@ TEAM_METRICS = {
     "DET": {"ID": 114, "ParkFactor": 1.06, "BullpenWHIP": 1.34, "OffenseRPG": 4.19, "Name": "Tigers (Comerica Park)", "FullName": "DETROIT TIGERS"},
     "SF":  {"ID": 137, "ParkFactor": 0.91, "BullpenWHIP": 1.24, "OffenseRPG": 4.05, "Name": "Giants (Oracle Park)", "FullName": "SAN FRANCISCO GIANTS"},
     "CLE": {"ID": 111, "ParkFactor": 1.01, "BullpenWHIP": 1.10, "OffenseRPG": 3.96, "Name": "Guardians (Progressive Field)", "FullName": "CLEVELAND GUARDIANS"},
-    "BOS": {"ID": 111, "ParkFactor": 1.02, "BullpenWHIP": 1.22, "OffenseRPG": 4.02, "Name": "Red Sox (Fenway Park)", "FullName": "BOSTON RED SOX"},
+    "BOS": {"ID": 111, "ParkFactor": 1.02, "BullpenWHIP": 1.22, "OffenseRPG": 4.02, "Name": "Red Sox (Fenway Park)", "FullName": "BOSTON RED Sox"},
     "TOR": {"ID": 141, "ParkFactor": 0.99, "BullpenWHIP": 1.30, "OffenseRPG": 4.38, "Name": "Blue Jays (Rogers Centre)", "FullName": "TORONTO BLUE JAYS"},
     "SD":  {"ID": 135, "ParkFactor": 0.94, "BullpenWHIP": 1.24, "OffenseRPG": 4.62, "Name": "Padres (Petco Park)", "FullName": "SAN DIEGO PADRES"},
     "KC":  {"ID": 118, "ParkFactor": 1.02, "BullpenWHIP": 1.58, "OffenseRPG": 4.33, "Name": "Royals (Kauffman Stadium)", "FullName": "KANSAS CITY ROYALS"},
@@ -93,7 +93,6 @@ def fetch_live_player_stats(player_id):
         pass
     return {"ERA": 4.00, "K9": 8.5, "BB9": 3.0, "WHIP": 1.25}
 
-# FIXED: Explicitly pulls precise 2026 Home and Away split dictionary entries directly from main records array
 def fetch_team_records_and_splits(team_id):
     url_standings = "https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&season=2026"
     profile = {"Record": "0-0", "DivRank": "N/A", "Home": "0-0", "Away": "0-0"}
@@ -105,7 +104,6 @@ def fetch_team_records_and_splits(team_id):
                     profile["Record"] = f"{team_rec.get('wins', 0)}-{team_rec.get('losses', 0)}"
                     profile["DivRank"] = f"{team_rec.get('divisionRank', 'N/A')}"
                     
-                    # Direct lookup matching exact key profiles
                     h_w = team_rec.get("homeRecord", {}).get("wins", 0)
                     h_l = team_rec.get("homeRecord", {}).get("losses", 0)
                     a_w = team_rec.get("awayRecord", {}).get("wins", 0)
@@ -464,5 +462,4 @@ st.markdown("""
     ⚠️ <strong>Disclaimer:</strong> Operational comparison tools are presented purely for informational tracking purposes. DiamondTotals does not accept wagers or process real money gaming. 
     <br>Must be 21+ to gamble. If you or someone you know has a gambling problem, call <strong>1-800-GAMBLER</strong>.
 </div>
-""", unsafe_allow_html=True)a["MGM_AwayML"] = price
-                                        else: book_data
+""", unsafe_allow_html=True)
