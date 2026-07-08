@@ -37,38 +37,38 @@ div[data-baseweb="select"] > div {
 st.title("⚾ DiamondTotals Master Slate Engine")
 st.write("Dynamic multi-variable prediction framework pulling 100% live MLB database analytics.")
 
-# --- 2. THE 2026 MASTER MATRIX (OFFENSE, BULLPEN, PARK) ---
+# --- 2. THE 2026 MASTER MATRIX WITH VERIFIED MLB ID MAPS ---
 TEAM_METRICS = {
-    "WSH": {"ID": 120, "ParkFactor": 1.01, "BullpenWHIP": 1.46, "OffenseRPG": 5.38, "Name": "Nationals (Nationals Park)", "FullName": "WASHINGTON NATIONALS"},
-    "LAD": {"ID": 119, "ParkFactor": 0.99, "BullpenWHIP": 1.22, "OffenseRPG": 5.34, "Name": "Dodgers (Dodger Stadium)", "FullName": "LOS ANGELES DODGERS"},
-    "MIL": {"ID": 158, "ParkFactor": 1.00, "BullpenWHIP": 1.14, "OffenseRPG": 5.15, "Name": "Brewers (American Family Field)", "FullName": "MILWAUKEE BREWERS"},
-    "PIT": {"ID": 134, "ParkFactor": 1.01, "BullpenWHIP": 1.40, "OffenseRPG": 5.16, "Name": "Pirates (PNC Park)", "FullName": "PITTSBURGH PIRATES"},
-    "CHC": {"ID": 112, "ParkFactor": 1.02, "BullpenWHIP": 1.28, "OffenseRPG": 5.04, "Name": "Cubs (Wrigley Field)", "FullName": "CHICAGO CUBS"},
-    "MIN": {"ID": 142, "ParkFactor": 1.01, "BullpenWHIP": 1.57, "OffenseRPG": 4.91, "Name": "Twins (Target Field)", "FullName": "MINNESOTA TWINS"},
-    "NYY": {"ID": 147, "ParkFactor": 1.00, "BullpenWHIP": 1.20, "OffenseRPG": 4.85, "Name": "Yankees (Yankee Stadium)", "FullName": "NEW YORK YANKEES"},
-    "COL": {"ID": 115, "ParkFactor": 1.31, "BullpenWHIP": 1.49, "OffenseRPG": 4.85, "Name": "Rockies (Coors Field)", "FullName": "COLORADO ROCKIES"},
-    "ATL": {"ID": 144, "ParkFactor": 0.88, "BullpenWHIP": 1.09, "OffenseRPG": 4.74, "Name": "Braves (Truist Park)", "FullName": "ATLANTA BRAVES"},
-    "CWS": {"ID": 145, "ParkFactor": 1.01, "BullpenWHIP": 1.35, "OffenseRPG": 4.78, "Name": "White Sox (Guaranteed Rate)", "FullName": "CHICAGO WHITE SOX"},
-    "STL": {"ID": 138, "ParkFactor": 0.98, "BullpenWHIP": 1.39, "OffenseRPG": 4.64, "Name": "Cardinals (Busch Stadium)", "FullName": "ST. LOUIS CARDINALS"},
-    "OAK": {"ID": 133, "ParkFactor": 0.94, "BullpenWHIP": 1.42, "OffenseRPG": 4.58, "Name": "Athletics (Sutter Health Park)", "FullName": "OAKLAND ATHLETICS"},
     "BAL": {"ID": 110, "ParkFactor": 1.00, "BullpenWHIP": 1.32, "OffenseRPG": 4.60, "Name": "Orioles (Camden Yards)", "FullName": "BALTIMORE ORIOLES"},
+    "BOS": {"ID": 111, "ParkFactor": 1.02, "BullpenWHIP": 1.22, "OffenseRPG": 4.02, "Name": "Red Sox (Fenway Park)", "FullName": "BOSTON RED SOX"},
+    "NYY": {"ID": 147, "ParkFactor": 1.00, "BullpenWHIP": 1.20, "OffenseRPG": 4.85, "Name": "Yankees (Yankee Stadium)", "FullName": "NEW YORK YANKEES"},
     "TB":  {"ID": 139, "ParkFactor": 0.95, "BullpenWHIP": 1.28, "OffenseRPG": 4.56, "Name": "Rays (Tropicana Field)", "FullName": "TAMPA BAY RAYS"},
-    "MIA": {"ID": 146, "ParkFactor": 0.93, "BullpenWHIP": 1.17, "OffenseRPG": 4.52, "Name": "Marlins (loanDepot park)", "FullName": "MIAMI MARLINS"},
-    "PHI": {"ID": 143, "ParkFactor": 1.00, "BullpenWHIP": 1.15, "OffenseRPG": 4.49, "Name": "Phillies (Citizens Bank Park)", "FullName": "PHILADELPHIA PHILLIES"},
+    "TOR": {"ID": 141, "ParkFactor": 0.99, "BullpenWHIP": 1.30, "OffenseRPG": 4.38, "Name": "Blue Jays (Rogers Centre)", "FullName": "TORONTO BLUE JAYS"},
+    "CWS": {"ID": 145, "ParkFactor": 1.01, "BullpenWHIP": 1.35, "OffenseRPG": 4.78, "Name": "White Sox (Guaranteed Rate)", "FullName": "CHICAGO WHITE SOX"},
+    "CLE": {"ID": 114, "ParkFactor": 1.01, "BullpenWHIP": 1.10, "OffenseRPG": 3.96, "Name": "Guardians (Progressive Field)", "FullName": "CLEVELAND GUARDIANS"},
+    "DET": {"ID": 116, "ParkFactor": 1.06, "BullpenWHIP": 1.34, "OffenseRPG": 4.19, "Name": "Tigers (Comerica Park)", "FullName": "DETROIT TIGERS"},
+    "KC":  {"ID": 118, "ParkFactor": 1.02, "BullpenWHIP": 1.58, "OffenseRPG": 4.33, "Name": "Royals (Kauffman Stadium)", "FullName": "KANSAS CITY ROYALS"},
+    "MIN": {"ID": 142, "ParkFactor": 1.01, "BullpenWHIP": 1.57, "OffenseRPG": 4.91, "Name": "Twins (Target Field)", "FullName": "MINNESOTA TWINS"},
     "HOU": {"ID": 117, "ParkFactor": 1.01, "BullpenWHIP": 1.35, "OffenseRPG": 4.49, "Name": "Astros (Minute Maid Park)", "FullName": "HOUSTON ASTROS"},
     "LAA": {"ID": 108, "ParkFactor": 0.99, "BullpenWHIP": 1.42, "OffenseRPG": 4.49, "Name": "Angels (Angel Stadium)", "FullName": "LOS ANGELES ANGELS"},
-    "AZ":  {"ID": 109, "ParkFactor": 1.04, "BullpenWHIP": 1.26, "OffenseRPG": 4.27, "Name": "Diamondbacks (Chase Field)", "FullName": "ARIZONA DIAMONDBACKS"},
-    "CIN": {"ID": 113, "ParkFactor": 1.12, "BullpenWHIP": 1.53, "OffenseRPG": 4.19, "Name": "Reds (Great American Ball Park)", "FullName": "CINCINNATI REDS"},
-    "DET": {"ID": 114, "ParkFactor": 1.06, "BullpenWHIP": 1.34, "OffenseRPG": 4.19, "Name": "Tigers (Comerica Park)", "FullName": "DETROIT TIGERS"},
-    "SF":  {"ID": 137, "ParkFactor": 0.91, "BullpenWHIP": 1.24, "OffenseRPG": 4.05, "Name": "Giants (Oracle Park)", "FullName": "SAN FRANCISCO GIANTS"},
-    "CLE": {"ID": 111, "ParkFactor": 1.01, "BullpenWHIP": 1.10, "OffenseRPG": 3.96, "Name": "Guardians (Progressive Field)", "FullName": "CLEVELAND GUARDIANS"},
-    "BOS": {"ID": 111, "ParkFactor": 1.02, "BullpenWHIP": 1.22, "OffenseRPG": 4.02, "Name": "Red Sox (Fenway Park)", "FullName": "BOSTON RED Sox"},
-    "TOR": {"ID": 141, "ParkFactor": 0.99, "BullpenWHIP": 1.30, "OffenseRPG": 4.38, "Name": "Blue Jays (Rogers Centre)", "FullName": "TORONTO BLUE JAYS"},
-    "SD":  {"ID": 135, "ParkFactor": 0.94, "BullpenWHIP": 1.24, "OffenseRPG": 4.62, "Name": "Padres (Petco Park)", "FullName": "SAN DIEGO PADRES"},
-    "KC":  {"ID": 118, "ParkFactor": 1.02, "BullpenWHIP": 1.58, "OffenseRPG": 4.33, "Name": "Royals (Kauffman Stadium)", "FullName": "KANSAS CITY ROYALS"},
+    "OAK": {"ID": 133, "ParkFactor": 0.94, "BullpenWHIP": 1.42, "OffenseRPG": 4.58, "Name": "Athletics (Sutter Health Park)", "FullName": "OAKLAND ATHLETICS"},
+    "SEA": {"ID": 136, "ParkFactor": 0.82, "BullpenWHIP": 1.34, "OffenseRPG": 4.18, "Name": "Mariners (T-Mobile Park)", "FullName": "SEATTLE MARiners"},
     "TEX": {"ID": 140, "ParkFactor": 0.97, "BullpenWHIP": 1.26, "OffenseRPG": 4.40, "Name": "Rangers (Globe Life Field)", "FullName": "TEXAS RANGERS"},
+    "ATL": {"ID": 144, "ParkFactor": 0.88, "BullpenWHIP": 1.09, "OffenseRPG": 4.74, "Name": "Braves (Truist Park)", "FullName": "ATLANTA BRAVES"},
+    "MIA": {"ID": 146, "ParkFactor": 0.93, "BullpenWHIP": 1.17, "OffenseRPG": 4.52, "Name": "Marlins (loanDepot park)", "FullName": "MIAMI MARLINS"},
     "NYM": {"ID": 121, "ParkFactor": 0.94, "BullpenWHIP": 1.26, "OffenseRPG": 4.55, "Name": "Mets (Citi Field)", "FullName": "NEW YORK METS"},
-    "SEA": {"ID": 136, "ParkFactor": 0.82, "BullpenWHIP": 1.34, "OffenseRPG": 4.18, "Name": "Mariners (T-Mobile Park)", "FullName": "SEATTLE MARINERS"}
+    "PHI": {"ID": 143, "ParkFactor": 1.00, "BullpenWHIP": 1.15, "OffenseRPG": 4.49, "Name": "Phillies (Citizens Bank Park)", "FullName": "PHILADELPHIA PHILLIES"},
+    "WSH": {"ID": 120, "ParkFactor": 1.01, "BullpenWHIP": 1.46, "OffenseRPG": 5.38, "Name": "Nationals (Nationals Park)", "FullName": "WASHINGTON NATIONALS"},
+    "CHC": {"ID": 112, "ParkFactor": 1.02, "BullpenWHIP": 1.28, "OffenseRPG": 5.04, "Name": "Cubs (Wrigley Field)", "FullName": "CHICAGO CUBS"},
+    "CIN": {"ID": 113, "ParkFactor": 1.12, "BullpenWHIP": 1.53, "OffenseRPG": 4.19, "Name": "Reds (Great American Ball Park)", "FullName": "CINCINNATI REDS"},
+    "MIL": {"ID": 158, "ParkFactor": 1.00, "BullpenWHIP": 1.14, "OffenseRPG": 5.15, "Name": "Brewers (American Family Field)", "FullName": "MILWAUKEE BREWERS"},
+    "PIT": {"ID": 134, "ParkFactor": 1.01, "BullpenWHIP": 1.40, "OffenseRPG": 5.16, "Name": "Pirates (PNC Park)", "FullName": "PITTSBURGH PIRATES"},
+    "STL": {"ID": 138, "ParkFactor": 0.98, "BullpenWHIP": 1.39, "OffenseRPG": 4.64, "Name": "Cardinals (Busch Stadium)", "FullName": "ST. LOUIS CARDINALS"},
+    "AZ":  {"ID": 109, "ParkFactor": 1.04, "BullpenWHIP": 1.26, "OffenseRPG": 4.27, "Name": "Diamondbacks (Chase Field)", "FullName": "ARIZONA DIAMONDBACKS"},
+    "COL": {"ID": 115, "ParkFactor": 1.31, "BullpenWHIP": 1.49, "OffenseRPG": 4.85, "Name": "Rockies (COors Field)", "FullName": "COLORADO ROCKIES"},
+    "LAD": {"ID": 119, "ParkFactor": 0.99, "BullpenWHIP": 1.22, "OffenseRPG": 5.34, "Name": "Dodgers (Dodger Stadium)", "FullName": "LOS ANGELES DODGERS"},
+    "SD":  {"ID": 135, "ParkFactor": 0.94, "BullpenWHIP": 1.24, "OffenseRPG": 4.62, "Name": "Padres (Petco Park)", "FullName": "SAN DIEGO PADRES"},
+    "SF":  {"ID": 137, "ParkFactor": 0.91, "BullpenWHIP": 1.24, "OffenseRPG": 4.05, "Name": "Giants (Oracle Park)", "FullName": "SAN FRANCISCO GIANTS"}
 }
 
 TRANSLATION_MAP = {
