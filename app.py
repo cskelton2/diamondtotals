@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # --- 1. CONFIGURATION SEED INPUTS ---
 ODDS_API_KEY = "ee1c905aa44500ef2bae248b2c415ae5"
@@ -19,6 +19,7 @@ st.markdown("""
 div[data-testid="stNotification"] {
     background-color: #1e293b !important;
     color: #ffffff !important;
+    border: 1px solid #334155 !important;
 }
 h1, h2, h3, h4, h5, h6 {
     color: #ffffff !important;
@@ -75,40 +76,6 @@ TRANSLATION_MAP = {
     "OAK": "OAK", "WSH": "WSH", "ARI": "AZ", "ANA": "LAA", "LOS": "LAD"
 }
 
-# --- 3. AUDITED SLATE RECAP CONTAINER (100% CLEAN DIRECTION FIELDS) ---
-with st.expander("📊 Yesterday's Complete Audited Slate Recap (July 7, 2026)", expanded=True):
-    st.write("Complete recap tracking all 16 matchups from last night's board verified against the official database.")
-    
-    slate_recap_logs = [
-        {"Matchup": "MIL @ STL (G1)", "Signal Type": "Game Total Runs", "Target Line": "OVER 7.5", "Final Score": "MIL 4 - STL 3", "Result": "LOSS"},
-        {"Matchup": "MIL @ STL (G2)", "Signal Type": "Game Total Runs", "Target Line": "OVER 7.5", "Final Score": "MIL 10 - STL 2", "Result": "WIN"},
-        {"Matchup": "CHC @ BAL", "Signal Type": "Moneyline Value", "Target Line": "CHC ML", "Final Score": "CHC 5 - BAL 2", "Result": "WIN"},
-        {"Matchup": "OAK @ DET", "Signal Type": "Moneyline Value", "Target Line": "DET ML", "Final Score": "OAK 2 - DET 6", "Result": "WIN"},
-        {"Matchup": "NYY @ TB", "Signal Type": "Moneyline Favorite", "Target Line": "NYY ML (Model: +0.7 Runs)", "Final Score": "NYY 4 - TB 6", "Result": "LOSS"},
-        {"Matchup": "SEA @ MIA", "Signal Type": "Game Total Runs", "Target Line": "UNDER 8.0", "Final Score": "SEA 5 - MIA 6", "Result": "LOSS"},
-        {"Matchup": "ATL @ PIT", "Signal Type": "Moneyline Value", "Target Line": "PIT ML", "Final Score": "ATL 4 - PIT 12", "Result": "WIN"},
-        {"Matchup": "HOU @ WSH", "Signal Type": "Game Total Runs", "Target Line": "OVER 8.5", "Final Score": "HOU 6 - WSH 3", "Result": "WIN"},
-        {"Matchup": "PHI @ CIN", "Signal Type": "Moneyline Value", "Target Line": "PHI ML", "Final Score": "PHI 4 - CIN 1", "Result": "WIN"},
-        {"Matchup": "KC @ NYM", "Signal Type": "Game Total Runs", "Target Line": "OVER 9.5", "Final Score": "KC 16 - NYM 12", "Result": "WIN"},
-        {"Matchup": "BOS @ CWS", "Signal Type": "Game Total Runs", "Target Line": "UNDER 9.0", "Final Score": "BOS 8 - CHW 1", "Result": "WIN"},
-        {"Matchup": "CLE @ MIN", "Signal Type": "Moneyline Value", "Target Line": "MIN ML", "Final Score": "CLE 1 - MIN 3", "Result": "WIN"},
-        {"Matchup": "LAA @ TEX", "Signal Type": "Game Total Runs", "Target Line": "OVER 8.5", "Final Score": "LAA 3 - TEX 8", "Result": "WIN"},
-        {"Matchup": "AZ @ SD", "Signal Type": "Moneyline Value", "Target Line": "SD ML", "Final Score": "AZ 1 - SD 4", "Result": "WIN"},
-        {"Matchup": "TOR @ SF", "Signal Type": "Game Total Runs", "Target Line": "OVER 8.5", "Final Score": "TOR 9 - SF 3", "Result": "WIN"},
-        {"Matchup": "COL @ LAD", "Signal Type": "Moneyline Value", "Target Line": "LAD ML", "Final Score": "COL 4 - LAD 3", "Result": "LOSS"}
-    ]
-    
-    col_rec1, col_re2, col_re3 = st.columns(3)
-    with col_rec1:
-        st.metric(label="Recap Slate Record", value="12-4", delta="75.0% Accuracy Edge")
-    with col_re2:
-        st.metric(label="Total Runs Covered", value="114 Runs", delta="Model Volume Track")
-    with col_re3:
-        st.metric(label="Recap Unit Gain", value="+5.25 Units", delta="Plus-Odds Profit")
-        
-    st.dataframe(pd.DataFrame(slate_recap_logs).set_index("Matchup"), use_container_width=True)
-
-# --- 4. LIVE EXTRACTORS FOR STATISTICS AND ODDS FIELDS ---
 def fetch_live_player_stats(player_id):
     url = f"https://statsapi.mlb.com/api/v1/people/{player_id}/stats?stats=season&group=pitching"
     try:
@@ -245,7 +212,7 @@ def fetch_verified_daily_slate():
         pass
     return matchup_list
 
-# --- 5. GAME SELECTOR LAYER ---
+# --- 3. GAME SELECTOR LAYER ---
 active_slate = fetch_verified_daily_slate()
 
 if not active_slate:
@@ -269,7 +236,7 @@ with st.spinner("Harvesting official player stats..."):
     raw_away_stats = fetch_live_player_stats(game_data["AwayID"])
     raw_home_stats = fetch_live_player_stats(game_data["HomeID"])
 
-# --- 6. MATHEMATICAL ESTIMATION LAYER ---
+# --- 4. MATHEMATICAL ESTIMATION LAYER ---
 def build_composite_profile(name, team, stats):
     if "chase burns" in name.lower():
         stats = {"ERA": 2.40, "K9": 10.6, "BB9": 2.5, "WHIP": 0.98}
@@ -304,7 +271,7 @@ profile2 = build_composite_profile(game_data["HomeSP"], game_data["HomeTeam"], r
 away_team = profile1['Team']
 home_team = profile2['Team']
 
-# --- 7. THE GRAPHICAL MATCHUP SNOWFLAKE ---
+# --- 5. THE GRAPHICAL MATCHUP SNOWFLAKE ---
 st.write("### 2. Pitching Snowflake Profile Matrix")
 labels = ['Strikeout Power', 'Walk Suppression', 'xFIP Floor', 'SIERA Rating', 'Contact Control']
 num_vars = len(labels)
@@ -332,7 +299,7 @@ plt_ax.grid(color='#334155', linestyle='--', linewidth=0.5)
 plt_ax.legend(loc='upper right', bbox_to_anchor=(1.2, 1.1), facecolor='#1e293b', edgecolor='#334155', labelcolor='#ffffff', prop={'size': 8})
 st.pyplot(fig)
 
-# --- 8. LIVE SPORTSBOOK ODDS COMPARISON MATRIX ---
+# --- 6. LIVE SPORTSBOOK ODDS COMPARISON MATRIX ---
 st.write("### 3. Live Sportsbook Market Lines Comparison")
 st.write("Compare multi-bookmaker totals and moneylines to target optimal price inefficiencies.")
 
@@ -358,7 +325,7 @@ odds_matrix_data = [
 ]
 st.dataframe(pd.DataFrame(odds_matrix_data).set_index("Sportsbook"), use_container_width=True)
 
-# --- 9. DATA REFERENCE METRICS PANEL ---
+# --- 7. DATA REFERENCE METRICS PANEL ---
 st.write("### 4. Structural Model Data Reference Matrix")
 venue_metadata = TEAM_METRICS.get(home_team, {"ParkFactor": 1.00, "BullpenWHIP": 1.25, "OffenseRPG": 4.40, "Name": f"{home_team} Stadium"})
 away_metadata = TEAM_METRICS.get(away_team, {"ParkFactor": 1.00, "BullpenWHIP": 1.25, "OffenseRPG": 4.40, "Name": f"{away_team} Club"})
@@ -375,7 +342,7 @@ with col_g1:
 with col_g2:
     st.write(pd.DataFrame([{"Team": home_team, "Offense RPG": home_rpg, "Bullpen WHIP": home_bp_whip, "Live ERA": profile2['ERA'], "Calculated SIERA": profile2['SIERA']}]).T.rename(columns={0: "Home Baseline"}))
 
-# --- 10. MODEL EXECUTION PROJECTIONS & SIGNALS ---
+# --- 8. MODEL EXECUTION PROJECTIONS & SIGNALS ---
 st.write("### 5. Final DiamondTotals Execution Output")
 
 p1_efx = (profile1['SIERA'] + profile1['xFIP']) / 2
@@ -448,7 +415,7 @@ with sig_col2:
     else:
         st.warning("⚠️ **SIDES PASS**\n\nSportsbook market pricing matches true team win probability tracks.")
 
-# --- 11. COMPLIANCE FOOTER BLOCK ---
+# --- 9. COMPLIANCE FOOTER BLOCK ---
 st.markdown("""
 ---
 <div style="text-align: center; color: #64748b; font-size: 11px; padding: 10px;">
