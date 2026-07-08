@@ -108,7 +108,6 @@ def fetch_odds_api_feed():
 
 @st.cache_data(ttl=60)
 def fetch_verified_daily_slate():
-    # LOCKED: Strict configuration context targets tomorrow's July 8 slate parameters
     target_date_str = "2026-07-08"
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={target_date_str}&hydrate=probablePitcher,team"
     
@@ -140,7 +139,6 @@ def fetch_verified_daily_slate():
                 
                 calc_ou_base = 8.5
                 
-                # RE-ENGINEERED FALLBACKS: Applies strict matrix math to protect favorite allocations if keys exhaust limits
                 if "skubal" in home_sp_name or "skubal" in away_sp_name or home_team == "DET" or away_team == "OAK":
                     if home_team == "DET" or "skubal" in home_sp_name:
                         calc_away_ml = 160
@@ -357,7 +355,6 @@ raw_home_score = (home_rpg * (p1_efx / 4.00)) * park_factor
 projected_home_runs = round(raw_home_score + ((away_bp_whip - 1.25) * 1.50), 2)
 
 calculated_expected_total = round(projected_away_runs + projected_home_runs, 2)
-
 baseline_book_ou = game_data['DK_OU']
 baseline_book_away_ml = game_data['DK_AwayML']
 calculated_edge = round(calculated_expected_total - baseline_book_ou, 2)
@@ -381,11 +378,15 @@ ml_probability_edge = round((model_away_win_prob - vegas_away_prob) * 100, 1)
 
 st.info(f"🏟️ Venue: **{venue_metadata['Name']}** | Multi-Variable Park Factor Mod: `{park_factor:.2f}`")
 
+# FIXED: Re-mapped metric text strings to explicitly inject the American "+" symbol onto standard underdog variables
+away_delta_str = f"Model ML: {derived_away_ml:+}" if derived_away_ml > 0 else f"Model ML: {derived_away_ml}"
+home_delta_str = f"Model ML: {derived_home_ml:+}" if derived_home_ml > 0 else f"Model ML: {derived_home_ml}"
+
 val_col1, val_col2, val_col3 = st.columns(3)
 with val_col1:
-    st.metric(label=f"Projected {away_team} Total", value=f"{projected_away_runs} Runs", delta=f"Model ML: {derived_away_ml:+}" if derived_away_ml > 0 else f"Model ML: {derived_away_ml}")
+    st.metric(label=f"Projected {away_team} Total", value=f"{projected_away_runs} Runs", delta=away_delta_str)
 with val_col2:
-    st.metric(label=f"Projected {home_team} Total", value=f"{projected_home_runs} Runs", delta=f"Model ML: {derived_home_ml:+}" if derived_home_ml > 0 else f"Model ML: {derived_home_ml}")
+    st.metric(label=f"Projected {home_team} Total", value=f"{projected_home_runs} Runs", delta=home_delta_str)
 with val_col3:
     st.metric(label="Calculated Game Total", value=f"{calculated_expected_total} Runs", delta=f"O/U Margin: {calculated_edge:+} Runs")
 
@@ -410,7 +411,7 @@ with sig_col2:
     else:
         st.warning("⚠️ **SIDES PASS**\n\nSportsbook market pricing matches true team win probability tracks.")
 
-# --- 10. COMPLIANCE FOOTER BLOCK ---
+# --- 10. FIXED COMPLIANCE FOOTER BLOCK ---
 st.markdown("""
 ---
 <div style="text-align: center; color: #64748b; font-size: 11px; padding: 10px;">
