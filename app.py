@@ -254,10 +254,10 @@ def build_composite_profile(name, team, stats):
     derived_xfip = round(derived_siera + 0.10, 2)
     
     k_power = min(10.0, max(2.0, (stats["K9"] / 12.0) * 10))
-    bb_supp = min(10.0, max(2.0, 10 - (stats["BB9"] / 6.0) * 10))
-    xfip_floor = min(10.0, max(2.0, 10 - (derived_xfip / 6.0) * 10))
-    siera_rating = min(10.0, max(2.0, 10 - (derived_siera / 6.0) * 10))
-    contact_ctrl = min(10.0, max(2.0, 10 - (stats["WHIP"] - 0.7) * 8))
+    bb_supp = min(10.0, max(2.0, 10.0 - (stats["BB9"] / 6.0) * 10.0))
+    xfip_floor = min(10.0, max(2.0, 10.0 - (derived_xfip / 6.0) * 10.0))
+    siera_rating = min(10.0, max(2.0, 10.0 - (derived_siera / 6.0) * 10.0))
+    contact_ctrl = min(10.0, max(2.0, 10.0 - (stats["WHIP"] - 0.7) * 8.0))
     
     return {
         "Name": name, "Team": team, "ERA": stats["ERA"], "xFIP": derived_xfip, "SIERA": derived_siera,
@@ -363,12 +363,19 @@ away_exponent = projected_away_runs ** 1.83
 home_exponent = projected_home_runs ** 1.83
 model_away_win_prob = away_exponent / (away_exponent + home_exponent)
 
-if model_away_win_prob >= 0.50:
-    derived_away_ml = int(-100 * (model_away_win_prob / (1 - model_away_win_prob)))
-    derived_home_ml = int(100 * ((1 - model_away_win_prob) / model_away_win_prob))
-else:
-    derived_away_ml = int(100 * ((1 - model_away_win_prob) / model_away_win_prob))
-    derived_home_ml = int(-100 * (model_away_win_prob / (1 - model_away_win_prob)))
+# FIXED: Bulletproof conversion function that strictly prevents realistic line float overlaps
+def calculate_american_odds(prob):
+    if prob == 0.50:
+        return "+100"
+    elif prob > 0.50:
+        val = int(-100.0 * (prob / (1.0 - prob)))
+        return f"{val}"
+    else:
+        val = int(100.0 * ((1.0 - prob) / prob))
+        return f"+{val}"
+
+away_ml_str = calculate_american_odds(model_away_win_prob)
+home_ml_str = calculate_american_odds(1.0 - model_away_win_prob)
 
 if baseline_book_away_ml < 0:
     vegas_away_prob = abs(baseline_book_away_ml) / (abs(baseline_book_away_ml) + 100)
@@ -381,10 +388,10 @@ st.info(f"🏟️ Venue: **{venue_metadata['Name']}** | Multi-Variable Park Fact
 val_col1, val_col2, val_col3 = st.columns(3)
 with val_col1:
     st.metric(label=f"Projected {away_team} Total", value=f"{projected_away_runs} Runs")
-    st.write(f"Model ML: {derived_away_ml:+}" if derived_away_ml > 0 else f"Model ML: {derived_away_ml}")
+    st.write(f"**Model ML:** `{away_ml_str}`")
 with val_col2:
     st.metric(label=f"Projected {home_team} Total", value=f"{projected_home_runs} Runs")
-    st.write(f"Model ML: {derived_home_ml:+}" if derived_home_ml > 0 else f"Model ML: {derived_home_ml}")
+    st.write(f"**Model ML:** `{home_ml_str}`")
 with val_col3:
     st.metric(label="Calculated Game Total", value=f"{calculated_expected_total} Runs", delta=f"O/U Margin: {calculated_edge:+} Runs")
 
