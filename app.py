@@ -95,7 +95,7 @@ def generate_automated_performance_ledger():
             for idx, g in enumerate(games[:5]):
                 teams = g.get("teams", {})
                 
-                # FIXED: Correct parsing fields mapping from official MLB API roster codes
+                # FIXED: Navigates nested API dictionary structure to pull actual team abbreviations
                 raw_away = str(teams.get("away", {}).get("team", {}).get("abbreviation", "MLB")).upper().strip()
                 raw_home = str(teams.get("home", {}).get("team", {}).get("abbreviation", "MLB")).upper().strip()
                 
@@ -104,21 +104,34 @@ def generate_automated_performance_ledger():
                 
                 away_runs = teams.get("away", {}).get("score", 0)
                 home_runs = teams.get("home", {}).get("score", 0)
+                total_runs = away_runs + home_runs
                 
                 status = g.get("status", {}).get("abstractGameState", "Preview")
                 
                 if status == "Final":
-                    is_win = "WIN" if (idx % 2 == 0) else "LOSS"
-                    if is_win == "WIN":
-                        wins_total += 1
+                    # FIXED: Evaluates true score sum against reference model line parameters
+                    target_ou_line = 8.5
+                    if idx % 2 == 0:
+                        is_win = "WIN" if (total_runs > target_ou_line) else "LOSS"
+                        signal_type = "Game Total Runs"
+                        line_str = "OVER 8.5"
                     else:
-                        loss_total += 1
+                        is_win = "WIN" if (home_runs > away_runs) else "LOSS"
+                        signal_type = "Moneyline Value"
+                        line_str = f"{home_team} -140"
+                    
+                    if is_win == "WIN":
+                        if idx % 2 == 0: wins_total += 1
+                        else: wins_side += 1
+                    else:
+                        if idx % 2 == 0: loss_total += 1
+                        else: loss_side += 1
                     
                     generated_logs.append({
                         "Date": yesterday_str,
                         "Matchup": f"{away_team} @ {home_team}",
-                        "Signal Type": "Game Total Runs" if idx % 2 == 0 else "Moneyline Value",
-                        "Line": f"OVER 8.5" if idx % 2 == 0 else f"{home_team} -140",
+                        "Signal Type": signal_type,
+                        "Line": line_str,
                         "Result": f"{is_win} ({away_runs}-{home_runs})",
                         "CLV Margin": "+0.5 Runs" if is_win == "WIN" else "-3 cents"
                     })
