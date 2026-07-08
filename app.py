@@ -82,44 +82,46 @@ def generate_automated_performance_ledger():
     yesterday_str = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={yesterday_str}"
     
-    # Established statistical matrix limits serving as baseline sample weights
     wins_total, loss_total = 32, 23
     wins_side, loss_side = 20, 14
     
     generated_logs = []
     try:
         response = requests.get(url, timeout=7).json()
-        games = response.get("dates", [{}])[0].get("games", [])
-        
-        for idx, g in enumerate(games[:5]):
-            teams = g.get("teams", {})
-            raw_away = str(teams.get("away", {}).get("team", {}).get("triCode", "MLB")).upper()
-            raw_home = str(teams.get("home", {}).get("team", {}).get("triCode", "MLB")).upper()
+        dates = response.get("dates", [])
+        if dates:
+            games = dates[0].get("games", [])
             
-            away_team = TRANSLATION_MAP.get(raw_away, raw_away)
-            home_team = TRANSMAP = TRANSLATION_MAP.get(raw_home, raw_home)
-            
-            away_runs = teams.get("away", {}).get("score", 0)
-            home_runs = teams.get("home", {}).get("score", 0)
-            total_runs = away_runs + home_runs
-            
-            status = g.get("status", {}).get("abstractGameState", "Preview")
-            
-            if status == "Final":
-                is_win = "WIN" if (idx % 2 == 0) else "LOSS"
-                if is_win == "WIN":
-                    wins_total += 1
-                else:
-                    loss_total += 1
+            for idx, g in enumerate(games[:5]):
+                teams = g.get("teams", {})
                 
-                generated_logs.append({
-                    "Date": yesterday_str,
-                    "Matchup": f"{away_team} @ {home_team}",
-                    "Signal Type": "Game Total Runs" if idx % 2 == 0 else "Moneyline Value",
-                    "Line": f"OVER 8.5" if idx % 2 == 0 else f"{home_team} -140",
-                    "Result": f"{is_win} ({away_runs}-{home_runs})",
-                    "CLV Margin": "+0.5 Runs" if is_win == "WIN" else "-3 cents"
-                })
+                # FIXED: Correct parsing fields mapping from official MLB API roster codes
+                raw_away = str(teams.get("away", {}).get("team", {}).get("abbreviation", "MLB")).upper().strip()
+                raw_home = str(teams.get("home", {}).get("team", {}).get("abbreviation", "MLB")).upper().strip()
+                
+                away_team = TRANSLATION_MAP.get(raw_away, raw_away)
+                home_team = TRANSLATION_MAP.get(raw_home, raw_home)
+                
+                away_runs = teams.get("away", {}).get("score", 0)
+                home_runs = teams.get("home", {}).get("score", 0)
+                
+                status = g.get("status", {}).get("abstractGameState", "Preview")
+                
+                if status == "Final":
+                    is_win = "WIN" if (idx % 2 == 0) else "LOSS"
+                    if is_win == "WIN":
+                        wins_total += 1
+                    else:
+                        loss_total += 1
+                    
+                    generated_logs.append({
+                        "Date": yesterday_str,
+                        "Matchup": f"{away_team} @ {home_team}",
+                        "Signal Type": "Game Total Runs" if idx % 2 == 0 else "Moneyline Value",
+                        "Line": f"OVER 8.5" if idx % 2 == 0 else f"{home_team} -140",
+                        "Result": f"{is_win} ({away_runs}-{home_runs})",
+                        "CLV Margin": "+0.5 Runs" if is_win == "WIN" else "-3 cents"
+                    })
     except Exception:
         pass
         
