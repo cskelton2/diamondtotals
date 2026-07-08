@@ -39,36 +39,36 @@ st.write("Dynamic multi-variable prediction framework pulling 100% live MLB data
 
 # --- 2. THE 2026 MASTER MATRIX (OFFENSE, BULLPEN, PARK) ---
 TEAM_METRICS = {
-    "WSH": {"ParkFactor": 1.01, "BullpenWHIP": 1.46, "OffenseRPG": 5.38, "Name": "Nationals (Nationals Park)", "FullName": "WASHINGTON NATIONALS"},
-    "LAD": {"ParkFactor": 0.99, "BullpenWHIP": 1.22, "OffenseRPG": 5.34, "Name": "Dodgers (Dodger Stadium)", "FullName": "LOS ANGELES DODGERS"},
-    "MIL": {"ParkFactor": 1.00, "BullpenWHIP": 1.14, "OffenseRPG": 5.15, "Name": "Brewers (American Family Field)", "FullName": "MILWAUKEE BREWERS"},
-    "PIT": {"ParkFactor": 1.01, "BullpenWHIP": 1.40, "OffenseRPG": 5.16, "Name": "Pirates (PNC Park)", "FullName": "PITTSBURGH PIRATES"},
-    "CHC": {"ParkFactor": 1.02, "BullpenWHIP": 1.28, "OffenseRPG": 5.04, "Name": "Cubs (Wrigley Field)", "FullName": "CHICAGO CUBS"},
-    "MIN": {"ParkFactor": 1.01, "BullpenWHIP": 1.57, "OffenseRPG": 4.91, "Name": "Twins (Target Field)", "FullName": "MINNESOTA TWINS"},
-    "NYY": {"ParkFactor": 1.00, "BullpenWHIP": 1.20, "OffenseRPG": 4.85, "Name": "Yankees (Yankee Stadium)", "FullName": "NEW YORK YANKEES"},
-    "COL": {"ParkFactor": 1.31, "BullpenWHIP": 1.49, "OffenseRPG": 4.85, "Name": "Rockies (Coors Field)", "FullName": "COLORADO ROCKIES"},
-    "ATL": {"ParkFactor": 0.88, "BullpenWHIP": 1.09, "OffenseRPG": 4.74, "Name": "Braves (Truist Park)", "FullName": "ATLANTA BRAVES"},
-    "CWS": {"ParkFactor": 1.01, "BullpenWHIP": 1.35, "OffenseRPG": 4.78, "Name": "White Sox (Guaranteed Rate)", "FullName": "CHICAGO WHITE SOX"},
-    "STL": {"ParkFactor": 0.98, "BullpenWHIP": 1.39, "OffenseRPG": 4.64, "Name": "Cardinals (Busch Stadium)", "FullName": "ST. LOUIS CARDINALS"},
-    "OAK": {"ParkFactor": 0.94, "BullpenWHIP": 1.42, "OffenseRPG": 4.58, "Name": "Athletics (Sutter Health Park)", "FullName": "OAKLAND ATHLETICS"},
-    "BAL": {"ParkFactor": 1.00, "BullpenWHIP": 1.32, "OffenseRPG": 4.60, "Name": "Orioles (Camden Yards)", "FullName": "BALTIMORE ORIOLES"},
-    "TB":  {"ParkFactor": 0.95, "BullpenWHIP": 1.28, "OffenseRPG": 4.56, "Name": "Rays (Tropicana Field)", "FullName": "TAMPA BAY RAYS"},
-    "MIA": {"ParkFactor": 0.93, "BullpenWHIP": 1.17, "OffenseRPG": 4.52, "Name": "Marlins (loanDepot park)", "FullName": "MIAMI MARLINS"},
-    "PHI": {"ParkFactor": 1.00, "BullpenWHIP": 1.15, "OffenseRPG": 4.49, "Name": "Phillies (Citizens Bank Park)", "FullName": "PHILADELPHIA PHILLIES"},
-    "HOU": {"ParkFactor": 1.01, "BullpenWHIP": 1.35, "OffenseRPG": 4.49, "Name": "Astros (Minute Maid Park)", "FullName": "HOUSTON ASTROS"},
-    "LAA": {"ParkFactor": 0.99, "BullpenWHIP": 1.42, "OffenseRPG": 4.49, "Name": "Angels (Angel Stadium)", "FullName": "LOS ANGELES ANGELS"},
-    "AZ":  {"ParkFactor": 1.04, "BullpenWHIP": 1.26, "OffenseRPG": 4.27, "Name": "Diamondbacks (Chase Field)", "FullName": "ARIZONA DIAMONDBACKS"},
-    "CIN": {"ParkFactor": 1.12, "BullpenWHIP": 1.53, "OffenseRPG": 4.19, "Name": "Reds (Great American Ball Park)", "FullName": "CINCINNATI REDS"},
-    "DET": {"ParkFactor": 1.06, "BullpenWHIP": 1.34, "OffenseRPG": 4.19, "Name": "Tigers (Comerica Park)", "FullName": "DETROIT TIGERS"},
-    "SF":  {"ParkFactor": 0.91, "BullpenWHIP": 1.24, "OffenseRPG": 4.05, "Name": "Giants (Oracle Park)", "FullName": "SAN FRANCISCO GIANTS"},
-    "CLE": {"ParkFactor": 1.01, "BullpenWHIP": 1.10, "OffenseRPG": 3.96, "Name": "Guardians (Progressive Field)", "FullName": "CLEVELAND GUARDIANS"},
-    "BOS": {"ParkFactor": 1.02, "BullpenWHIP": 1.22, "OffenseRPG": 4.02, "Name": "Red Sox (Fenway Park)", "FullName": "BOSTON RED SOX"},
-    "TOR": {"ParkFactor": 0.99, "BullpenWHIP": 1.30, "OffenseRPG": 4.38, "Name": "Blue Jays (Rogers Centre)", "FullName": "TORONTO BLUE JAYS"},
-    "SD":  {"ParkFactor": 0.94, "BullpenWHIP": 1.24, "OffenseRPG": 4.62, "Name": "Padres (Petco Park)", "FullName": "SAN DIEGO PADRES"},
-    "KC":  {"ParkFactor": 1.02, "BullpenWHIP": 1.58, "OffenseRPG": 4.33, "Name": "Royals (Kauffman Stadium)", "FullName": "KANSAS CITY ROYALS"},
-    "TEX": {"ParkFactor": 0.97, "BullpenWHIP": 1.26, "OffenseRPG": 4.40, "Name": "Rangers (Globe Life Field)", "FullName": "TEXAS RANGERS"},
-    "NYM": {"ParkFactor": 0.94, "BullpenWHIP": 1.26, "OffenseRPG": 4.55, "Name": "Mets (Citi Field)", "FullName": "NEW YORK METS"},
-    "SEA": {"ParkFactor": 0.82, "BullpenWHIP": 1.34, "OffenseRPG": 4.18, "Name": "Mariners (T-Mobile Park)", "FullName": "SEATTLE MARINERS"}
+    "WSH": {"ID": 120, "ParkFactor": 1.01, "BullpenWHIP": 1.46, "OffenseRPG": 5.38, "Name": "Nationals (Nationals Park)", "FullName": "WASHINGTON NATIONALS"},
+    "LAD": {"ID": 119, "ParkFactor": 0.99, "BullpenWHIP": 1.22, "OffenseRPG": 5.34, "Name": "Dodgers (Dodger Stadium)", "FullName": "LOS ANGELES DODGERS"},
+    "MIL": {"ID": 158, "ParkFactor": 1.00, "BullpenWHIP": 1.14, "OffenseRPG": 5.15, "Name": "Brewers (American Family Field)", "FullName": "MILWAUKEE BREWERS"},
+    "PIT": {"ID": 134, "ParkFactor": 1.01, "BullpenWHIP": 1.40, "OffenseRPG": 5.16, "Name": "Pirates (PNC Park)", "FullName": "PITTSBURGH PIRATES"},
+    "CHC": {"ID": 112, "ParkFactor": 1.02, "BullpenWHIP": 1.28, "OffenseRPG": 5.04, "Name": "Cubs (Wrigley Field)", "FullName": "CHICAGO CUBS"},
+    "MIN": {"ID": 142, "ParkFactor": 1.01, "BullpenWHIP": 1.57, "OffenseRPG": 4.91, "Name": "Twins (Target Field)", "FullName": "MINNESOTA TWINS"},
+    "NYY": {"ID": 147, "ParkFactor": 1.00, "BullpenWHIP": 1.20, "OffenseRPG": 4.85, "Name": "Yankees (Yankee Stadium)", "FullName": "NEW YORK YANKEES"},
+    "COL": {"ID": 115, "ParkFactor": 1.31, "BullpenWHIP": 1.49, "OffenseRPG": 4.85, "Name": "Rockies (Coors Field)", "FullName": "COLORADO ROCKIES"},
+    "ATL": {"ID": 144, "ParkFactor": 0.88, "BullpenWHIP": 1.09, "OffenseRPG": 4.74, "Name": "Braves (Truist Park)", "FullName": "ATLANTA BRAVES"},
+    "CWS": {"ID": 145, "ParkFactor": 1.01, "BullpenWHIP": 1.35, "OffenseRPG": 4.78, "Name": "White Sox (Guaranteed Rate)", "FullName": "CHICAGO WHITE SOX"},
+    "STL": {"ID": 138, "ParkFactor": 0.98, "BullpenWHIP": 1.39, "OffenseRPG": 4.64, "Name": "Cardinals (Busch Stadium)", "FullName": "ST. LOUIS CARDINALS"},
+    "OAK": {"ID": 133, "ParkFactor": 0.94, "BullpenWHIP": 1.42, "OffenseRPG": 4.58, "Name": "Athletics (Sutter Health Park)", "FullName": "OAKLAND ATHLETICS"},
+    "BAL": {"ID": 110, "ParkFactor": 1.00, "BullpenWHIP": 1.32, "OffenseRPG": 4.60, "Name": "Orioles (Camden Yards)", "FullName": "BALTIMORE ORIOLES"},
+    "TB":  {"ID": 139, "ParkFactor": 0.95, "BullpenWHIP": 1.28, "OffenseRPG": 4.56, "Name": "Rays (Tropicana Field)", "FullName": "TAMPA BAY RAYS"},
+    "MIA": {"ID": 146, "ParkFactor": 0.93, "BullpenWHIP": 1.17, "OffenseRPG": 4.52, "Name": "Marlins (loanDepot park)", "FullName": "MIAMI MARLINS"},
+    "PHI": {"ID": 143, "ParkFactor": 1.00, "BullpenWHIP": 1.15, "OffenseRPG": 4.49, "Name": "Phillies (Citizens Bank Park)", "FullName": "PHILADELPHIA PHILLIES"},
+    "HOU": {"ID": 117, "ParkFactor": 1.01, "BullpenWHIP": 1.35, "OffenseRPG": 4.49, "Name": "Astros (Minute Maid Park)", "FullName": "HOUSTON ASTROS"},
+    "LAA": {"ID": 108, "ParkFactor": 0.99, "BullpenWHIP": 1.42, "OffenseRPG": 4.49, "Name": "Angels (Angel Stadium)", "FullName": "LOS ANGELES ANGELS"},
+    "AZ":  {"ID": 109, "ParkFactor": 1.04, "BullpenWHIP": 1.26, "OffenseRPG": 4.27, "Name": "Diamondbacks (Chase Field)", "FullName": "ARIZONA DIAMONDBACKS"},
+    "CIN": {"ID": 113, "ParkFactor": 1.12, "BullpenWHIP": 1.53, "OffenseRPG": 4.19, "Name": "Reds (Great American Ball Park)", "FullName": "CINCINNATI REDS"},
+    "DET": {"ID": 114, "ParkFactor": 1.06, "BullpenWHIP": 1.34, "OffenseRPG": 4.19, "Name": "Tigers (Comerica Park)", "FullName": "DETROIT TIGERS"},
+    "SF":  {"ID": 137, "ParkFactor": 0.91, "BullpenWHIP": 1.24, "OffenseRPG": 4.05, "Name": "Giants (Oracle Park)", "FullName": "SAN FRANCISCO GIANTS"},
+    "CLE": {"ID": 111, "ParkFactor": 1.01, "BullpenWHIP": 1.10, "OffenseRPG": 3.96, "Name": "Guardians (Progressive Field)", "FullName": "CLEVELAND GUARDIANS"},
+    "BOS": {"ID": 111, "ParkFactor": 1.02, "BullpenWHIP": 1.22, "OffenseRPG": 4.02, "Name": "Red Sox (Fenway Park)", "FullName": "BOSTON RED SOX"},
+    "TOR": {"ID": 141, "ParkFactor": 0.99, "BullpenWHIP": 1.30, "OffenseRPG": 4.38, "Name": "Blue Jays (Rogers Centre)", "FullName": "TORONTO BLUE JAYS"},
+    "SD":  {"ID": 135, "ParkFactor": 0.94, "BullpenWHIP": 1.24, "OffenseRPG": 4.62, "Name": "Padres (Petco Park)", "FullName": "SAN DIEGO PADRES"},
+    "KC":  {"ID": 118, "ParkFactor": 1.02, "BullpenWHIP": 1.58, "OffenseRPG": 4.33, "Name": "Royals (Kauffman Stadium)", "FullName": "KANSAS CITY ROYALS"},
+    "TEX": {"ID": 140, "ParkFactor": 0.97, "BullpenWHIP": 1.26, "OffenseRPG": 4.40, "Name": "Rangers (Globe Life Field)", "FullName": "TEXAS RANGERS"},
+    "NYM": {"ID": 121, "ParkFactor": 0.94, "BullpenWHIP": 1.26, "OffenseRPG": 4.55, "Name": "Mets (Citi Field)", "FullName": "NEW YORK METS"},
+    "SEA": {"ID": 136, "ParkFactor": 0.82, "BullpenWHIP": 1.34, "OffenseRPG": 4.18, "Name": "Mariners (T-Mobile Park)", "FullName": "SEATTLE MARINERS"}
 }
 
 TRANSLATION_MAP = {
@@ -92,6 +92,30 @@ def fetch_live_player_stats(player_id):
     except Exception:
         pass
     return {"ERA": 4.00, "K9": 8.5, "BB9": 3.0, "WHIP": 1.25}
+
+def fetch_team_records_and_splits(team_id):
+    url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/stats?stats=seasonAdvanced&group=pitching"
+    url_standings = "https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&season=2026"
+    
+    profile = {"Record": "0-0", "DivRank": "N/A", "Home": "0-0", "Away": "0-0"}
+    try:
+        standings_data = requests.get(url_standings, timeout=5).json()
+        for record in standings_data.get("records", []):
+            for team_rec in record.get("teamRecords", []):
+                if int(team_rec.get("team", {}).get("id", 0)) == int(team_id):
+                    profile["Record"] = f"{team_rec.get('wins')}-{team_rec.get('losses')}"
+                    profile["DivRank"] = f"{team_rec.get('divisionRank')}"
+                    
+                    for split in team_rec.get("records", {}).get("homeRecords", []):
+                        if split.get("type") == "home":
+                            profile["Home"] = f"{split.get('wins')}-{split.get('losses')}"
+                    for split in team_rec.get("records", {}).get("awayRecords", []):
+                        if split.get("type") == "away":
+                            profile["Away"] = f"{split.get('wins')}-{split.get('losses')}"
+                    return profile
+    except Exception:
+        pass
+    return profile
 
 @st.cache_data(ttl=120)
 def fetch_odds_api_feed():
@@ -232,11 +256,29 @@ selected_game_str = st.selectbox("Choose a game to analyze:", labels_list)
 
 game_data = next(m for m in active_slate if m["Label"] == selected_game_str)
 
+away_t_code = game_data["AwayTeam"]
+home_t_code = game_data["HomeTeam"]
+
+# --- 4. NEW: LIVE TEAM STANDINGS AND SPLITS PANEL ---
+with st.spinner("Compiling live team division standings..."):
+    away_id = TEAM_METRICS.get(away_t_code, {"ID": 110})["ID"]
+    home_id = TEAM_METRICS.get(home_t_code, {"ID": 111})["ID"]
+    
+    away_splits = fetch_team_records_and_splits(away_id)
+    home_splits = fetch_team_records_and_splits(home_id)
+
+st.write("#### 🏆 Divisional Standings & Context Split Matrix")
+split_col1, split_col2 = st.columns(2)
+with split_col1:
+    st.info(f"**Away: {away_t_code}**\n\n* Overall: `{away_splits['Record']}`\n* Div Rank: #{away_splits['DivRank']}\n* Away Split: `{away_splits['Away']}`")
+with split_col2:
+    st.blueprint = st.info(f"**Home: {home_t_code}**\n\n* Overall: `{home_splits['Record']}`\n* Div Rank: #{home_splits['DivRank']}\n* Home Split: `{home_splits['Home']}`")
+
 with st.spinner("Harvesting official player stats..."):
     raw_away_stats = fetch_live_player_stats(game_data["AwayID"])
     raw_home_stats = fetch_live_player_stats(game_data["HomeID"])
 
-# --- 4. MATHEMATICAL ESTIMATION LAYER ---
+# --- 5. MATHEMATICAL ESTIMATION LAYER ---
 def build_composite_profile(name, team, stats):
     if "chase burns" in name.lower():
         stats = {"ERA": 2.40, "K9": 10.6, "BB9": 2.5, "WHIP": 0.98}
@@ -271,7 +313,7 @@ profile2 = build_composite_profile(game_data["HomeSP"], game_data["HomeTeam"], r
 away_team = profile1['Team']
 home_team = profile2['Team']
 
-# --- 5. THE GRAPHICAL MATCHUP SNOWFLAKE ---
+# --- 6. THE GRAPHICAL MATCHUP SNOWFLAKE ---
 st.write("### 2. Pitching Snowflake Profile Matrix")
 labels = ['Strikeout Power', 'Walk Suppression', 'xFIP Floor', 'SIERA Rating', 'Contact Control']
 num_vars = len(labels)
@@ -299,7 +341,7 @@ plt_ax.grid(color='#334155', linestyle='--', linewidth=0.5)
 plt_ax.legend(loc='upper right', bbox_to_anchor=(1.2, 1.1), facecolor='#1e293b', edgecolor='#334155', labelcolor='#ffffff', prop={'size': 8})
 st.pyplot(fig)
 
-# --- 6. LIVE SPORTSBOOK ODDS COMPARISON MATRIX ---
+# --- 7. LIVE SPORTSBOOK ODDS COMPARISON MATRIX ---
 st.write("### 3. Live Sportsbook Market Lines Comparison")
 st.write("Compare multi-bookmaker totals and moneylines to target optimal price inefficiencies.")
 
@@ -325,7 +367,7 @@ odds_matrix_data = [
 ]
 st.dataframe(pd.DataFrame(odds_matrix_data).set_index("Sportsbook"), use_container_width=True)
 
-# --- 7. DATA REFERENCE METRICS PANEL ---
+# --- 8. DATA REFERENCE METRICS PANEL ---
 st.write("### 4. Structural Model Data Reference Matrix")
 venue_metadata = TEAM_METRICS.get(home_team, {"ParkFactor": 1.00, "BullpenWHIP": 1.25, "OffenseRPG": 4.40, "Name": f"{home_team} Stadium"})
 away_metadata = TEAM_METRICS.get(away_team, {"ParkFactor": 1.00, "BullpenWHIP": 1.25, "OffenseRPG": 4.40, "Name": f"{away_team} Club"})
@@ -342,7 +384,7 @@ with col_g1:
 with col_g2:
     st.write(pd.DataFrame([{"Team": home_team, "Offense RPG": home_rpg, "Bullpen WHIP": home_bp_whip, "Live ERA": profile2['ERA'], "Calculated SIERA": profile2['SIERA']}]).T.rename(columns={0: "Home Baseline"}))
 
-# --- 8. MODEL EXECUTION PROJECTIONS & SIGNALS ---
+# --- 9. MODEL EXECUTION PROJECTIONS & SIGNALS ---
 st.write("### 5. Final DiamondTotals Execution Output")
 
 p1_efx = (profile1['SIERA'] + profile1['xFIP']) / 2
@@ -415,7 +457,7 @@ with sig_col2:
     else:
         st.warning("⚠️ **SIDES PASS**\n\nSportsbook market pricing matches true team win probability tracks.")
 
-# --- 9. COMPLIANCE FOOTER BLOCK ---
+# --- 10. COMPLIANCE FOOTER BLOCK ---
 st.markdown("""
 ---
 <div style="text-align: center; color: #64748b; font-size: 11px; padding: 10px;">
