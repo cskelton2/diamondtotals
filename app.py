@@ -93,7 +93,7 @@ def fetch_live_player_stats(player_id):
         pass
     return {"ERA": 4.00, "K9": 8.5, "BB9": 3.0, "WHIP": 1.25}
 
-# FIXED: Re-engineered split extraction engine to correctly search the sub-dictionaries inside the standings payload
+# FIXED: Explicitly pulls precise 2026 Home and Away split dictionary entries directly from main records array
 def fetch_team_records_and_splits(team_id):
     url_standings = "https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&season=2026"
     profile = {"Record": "0-0", "DivRank": "N/A", "Home": "0-0", "Away": "0-0"}
@@ -102,38 +102,20 @@ def fetch_team_records_and_splits(team_id):
         for record in standings_data.get("records", []):
             for team_rec in record.get("teamRecords", []):
                 if int(team_rec.get("team", {}).get("id", 0)) == int(team_id):
-                    w = int(team_rec.get("wins", 45))
-                    l = int(team_rec.get("losses", 40))
-                    profile["Record"] = f"{w}-{l}"
-                    profile["DivRank"] = f"{team_rec.get('divisionRank', '3')}"
+                    profile["Record"] = f"{team_rec.get('wins', 0)}-{team_rec.get('losses', 0)}"
+                    profile["DivRank"] = f"{team_rec.get('divisionRank', 'N/A')}"
                     
-                    # Target split list rows safely 
-                    splits_list = team_rec.get("records", {}).get("splitRecords", [])
-                    found_home, found_away = False, False
+                    # Direct lookup matching exact key profiles
+                    h_w = team_rec.get("homeRecord", {}).get("wins", 0)
+                    h_l = team_rec.get("homeRecord", {}).get("losses", 0)
+                    a_w = team_rec.get("awayRecord", {}).get("wins", 0)
+                    a_l = team_rec.get("awayRecord", {}).get("losses", 0)
                     
-                    for split in splits_list:
-                        s_type = str(split.get("type", "")).lower()
-                        if s_type == "home":
-                            profile["Home"] = f"{split.get('wins')}-{split.get('losses')}"
-                            found_home = True
-                        elif s_type in ["away", "road"]:
-                            profile["Away"] = f"{split.get('wins')}-{split.get('losses')}"
-                            found_away = True
-                            
-                    # Self-healing engine: Creates weighted estimates if server drops granular properties
-                    if not found_home or profile["Home"] == "0-0":
-                        profile["Home"] = f"{int(w * 0.55)}-{int(l * 0.45)}"
-                    if not found_away or profile["Away"] == "0-0":
-                        profile["Away"] = f"{int(w * 0.45)}-{int(l * 0.55)}"
+                    profile["Home"] = f"{h_w}-{h_l}"
+                    profile["Away"] = f"{a_w}-{a_l}"
                     return profile
     except Exception:
         pass
-        
-    # Standard fail-safe baseline to prevent blank screens under any circumstances
-    profile["Record"] = "48-42"
-    profile["DivRank"] = "2"
-    profile["Home"] = "26-19"
-    profile["Away"] = "22-23"
     return profile
 
 @st.cache_data(ttl=120)
@@ -482,4 +464,5 @@ st.markdown("""
     ⚠️ <strong>Disclaimer:</strong> Operational comparison tools are presented purely for informational tracking purposes. DiamondTotals does not accept wagers or process real money gaming. 
     <br>Must be 21+ to gamble. If you or someone you know has a gambling problem, call <strong>1-800-GAMBLER</strong>.
 </div>
-""", unsafe_allow_html=True)
+""", unsafe_allow_html=True)a["MGM_AwayML"] = price
+                                        else: book_data
