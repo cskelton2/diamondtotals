@@ -103,7 +103,6 @@ def fetch_all_standings_cached():
     except Exception:
         return {}
 
-# FIXED: Crawls the splitRecords array to fetch true home and away records correctly
 def fetch_team_records_and_splits(team_id):
     standings_data = fetch_all_standings_cached()
     profile = {"Record": "0-0", "DivRank": "N/A", "Home": "0-0", "Away": "0-0"}
@@ -118,7 +117,6 @@ def fetch_team_records_and_splits(team_id):
                     profile["Record"] = f"{team_rec.get('wins', 0)}-{team_rec.get('losses', 0)}"
                     profile["DivRank"] = f"{team_rec.get('divisionRank', 'N/A')}"
                     
-                    # Target split dictionaries under nested record layer
                     records_meta = team_rec.get("records", {})
                     for split in records_meta.get("splitRecords", []):
                         s_name = str(split.get("type", "")).lower()
@@ -135,7 +133,7 @@ def fetch_team_records_and_splits(team_id):
 def fetch_odds_api_feed():
     if not ODDS_API_KEY:
         return []
-    url = f"https://api.the-odds-api.com/v4/sports/baseball_mlb/odds/?apiKey={ODDS_API_KEY}&regions=us&markets=h2h,totals&oddsFormat=american"
+    url = f"https://api.the-odds-api.com/v4/sports/baseball_mlb/odds/?apiKey={ODDS_API_KEY}&regions=us&markets=h2h,markets=totals&oddsFormat=american"
     try:
         response = requests.get(url, timeout=8)
         if response.status_code == 200:
@@ -172,30 +170,18 @@ def fetch_verified_daily_slate():
                 away_p_data = teams.get("away", {}).get("probablePitcher", {})
                 home_p_data = teams.get("home", {}).get("probablePitcher", {})
                 
-                away_sp_name = str(away_p_data.get("fullName", "")).lower()
-                home_sp_name = str(home_p_data.get("fullName", "")).lower()
-                
-                calc_ou_base = 8.5
-                
-                if "skubal" in home_sp_name or "skubal" in away_sp_name or home_team == "DET" or away_team == "OAK":
-                    if home_team == "DET" or "skubal" in home_sp_name:
-                        calc_away_ml = 160
-                        calc_home_ml = -190
-                    else:
-                        calc_away_ml = -190
-                        calc_home_ml = 160
+                # FIXED: Removed the old "skubal" / hardcoded lines block to allow live feed data mapping to resolve natively
+                away_rpg_meta = TEAM_METRICS.get(away_team, {"OffenseRPG": 4.50}).get("OffenseRPG")
+                home_rpg_meta = TEAM_METRICS.get(home_team, {"OffenseRPG": 4.50}).get("OffenseRPG")
+                if away_rpg_meta > home_rpg_meta:
+                    calc_away_ml = -135
+                    calc_home_ml = 115
                 else:
-                    away_rpg_meta = TEAM_METRICS.get(away_team, {"OffenseRPG": 4.50}).get("OffenseRPG")
-                    home_rpg_meta = TEAM_METRICS.get(home_team, {"OffenseRPG": 4.50}).get("OffenseRPG")
-                    if away_rpg_meta > home_rpg_meta:
-                        calc_away_ml = -135
-                        calc_home_ml = 115
-                    else:
-                        calc_away_ml = 120
-                        calc_home_ml = -140
+                    calc_away_ml = 120
+                    calc_home_ml = -140
                 
                 book_data = {
-                    "DK_OU": calc_ou_base, "FD_OU": calc_ou_base, "MGM_OU": calc_ou_base,
+                    "DK_OU": 8.5, "FD_OU": 8.5, "MGM_OU": 8.5,
                     "DK_AwayML": calc_away_ml, "FD_AwayML": calc_away_ml - 4, "MGM_AwayML": calc_away_ml + 2,
                     "DK_HomeML": calc_home_ml, "FD_HomeML": calc_home_ml + 6, "MGM_HomeML": calc_home_ml - 2
                 }
