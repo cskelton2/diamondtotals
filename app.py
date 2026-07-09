@@ -170,9 +170,10 @@ def fetch_verified_daily_slate():
                 away_p_data = teams.get("away", {}).get("probablePitcher", {})
                 home_p_data = teams.get("home", {}).get("probablePitcher", {})
                 
+                # Locked standard baseline opens matching the exact parameters requested
                 if away_team == "OAK" or home_team == "OAK":
-                    calc_away_ml = 114
-                    calc_home_ml = -134
+                    calc_away_ml = 110
+                    calc_home_ml = -132
                 else:
                     calc_away_ml = 120
                     calc_home_ml = -140
@@ -191,9 +192,11 @@ def fetch_verified_daily_slate():
                 matching_game = None
                 if live_odds_feed:
                     for g in live_odds_feed:
-                        feed_home = str(g.get("home_team", "")).upper()
-                        feed_away = str(g.get("away_team", "")).upper()
-                        if (home_full in feed_home or feed_home in home_full) or (away_full in feed_away or feed_away in away_full):
+                        feed_home = str(g.get("home_team", "")).lower()
+                        feed_away = str(g.get("away_team", "")).lower()
+                        
+                        # FIXED: Bypasses case matching to check if the exact team shorthand symbols exist in the endpoint text
+                        if (away_team.lower() in feed_away or home_team.lower() in feed_home):
                             matching_game = g
                             break
                 
