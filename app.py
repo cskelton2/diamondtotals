@@ -52,7 +52,7 @@ TEAM_METRICS = {
     "HOU": {"ID": 117, "ParkFactor": 1.01, "BullpenWHIP": 1.35, "OffenseRPG": 4.49, "Name": "Astros (Minute Maid Park)", "FullName": "HOUSTON ASTROS"},
     "LAA": {"ID": 108, "ParkFactor": 0.99, "BullpenWHIP": 1.42, "OffenseRPG": 4.49, "Name": "Angels (Angel Stadium)", "FullName": "LOS ANGELES ANGELS"},
     "OAK": {"ID": 133, "ParkFactor": 0.94, "BullpenWHIP": 1.42, "OffenseRPG": 4.58, "Name": "Athletics (Sutter Health Park)", "FullName": "OAKLAND ATHLETICS"},
-    "SEA": {"ID": 136, "ParkFactor": 0.82, "BullpenWHIP": 1.34, "OffenseRPG": 4.18, "Name": "Mariners (T-Mobile Park)", "FullName": "SEATTLE MARiners"},
+    "SEA": {"ID": 136, "ParkFactor": 0.82, "BullpenWHIP": 1.34, "OffenseRPG": 4.18, "Name": "Mariners (T-Mobile Park)", "FullName": "SEATTLE MARINERS"},
     "TEX": {"ID": 140, "ParkFactor": 0.97, "BullpenWHIP": 1.26, "OffenseRPG": 4.40, "Name": "Rangers (Globe Life Field)", "FullName": "TEXAS RANGERS"},
     "ATL": {"ID": 144, "ParkFactor": 0.88, "BullpenWHIP": 1.09, "OffenseRPG": 4.74, "Name": "Braves (Truist Park)", "FullName": "ATLANTA BRAVES"},
     "MIA": {"ID": 146, "ParkFactor": 0.93, "BullpenWHIP": 1.17, "OffenseRPG": 4.52, "Name": "Marlins (loanDepot park)", "FullName": "MIAMI MARLINS"},
@@ -133,7 +133,7 @@ def fetch_team_records_and_splits(team_id):
 def fetch_odds_api_feed():
     if not ODDS_API_KEY:
         return []
-    url = f"https://api.the-odds-api.com/v4/sports/baseball_mlb/odds/?apiKey={ODDS_API_KEY}&regions=us&markets=h2h,markets=totals&oddsFormat=american"
+    url = f"https://api.the-odds-api.com/v4/sports/baseball_mlb/odds/?apiKey={ODDS_API_KEY}&regions=us&markets=h2h,totals&oddsFormat=american"
     try:
         response = requests.get(url, timeout=8)
         if response.status_code == 200:
@@ -170,20 +170,20 @@ def fetch_verified_daily_slate():
                 away_p_data = teams.get("away", {}).get("probablePitcher", {})
                 home_p_data = teams.get("home", {}).get("probablePitcher", {})
                 
-                # FIXED: Removed the old "skubal" / hardcoded lines block to allow live feed data mapping to resolve natively
-                away_rpg_meta = TEAM_METRICS.get(away_team, {"OffenseRPG": 4.50}).get("OffenseRPG")
-                home_rpg_meta = TEAM_METRICS.get(home_team, {"OffenseRPG": 4.50}).get("OffenseRPG")
-                if away_rpg_meta > home_rpg_meta:
-                    calc_away_ml = -135
-                    calc_home_ml = 115
+                # Baseline open models
+                if away_team == "OAK" or home_team == "OAK":
+                    calc_away_ml = 105
+                    calc_home_ml = -125
                 else:
                     calc_away_ml = 120
                     calc_home_ml = -140
                 
                 book_data = {
-                    "DK_OU": 8.5, "FD_OU": 8.5, "MGM_OU": 8.5,
-                    "DK_AwayML": calc_away_ml, "FD_AwayML": calc_away_ml - 4, "MGM_AwayML": calc_away_ml + 2,
-                    "DK_HomeML": calc_home_ml, "FD_HomeML": calc_home_ml + 6, "MGM_HomeML": calc_home_ml - 2
+                    "DK_OU": 9.0 if (away_team == "OAK" or home_team == "OAK") else 8.5, 
+                    "FD_OU": 9.0 if (away_team == "OAK" or home_team == "OAK") else 8.5, 
+                    "MGM_OU": 9.0 if (away_team == "OAK" or home_team == "OAK") else 8.5,
+                    "DK_AwayML": calc_away_ml, "FD_AwayML": calc_away_ml, "MGM_AwayML": calc_away_ml,
+                    "DK_HomeML": calc_home_ml, "FD_HomeML": calc_home_ml, "MGM_HomeML": calc_home_ml
                 }
                 
                 away_full = TEAM_METRICS.get(away_team, {}).get("FullName", "AWAY").upper()
@@ -208,6 +208,7 @@ def fetch_verified_daily_slate():
                             if market["key"] == "h2h":
                                 for outcome in market["outcomes"]:
                                     out_name = str(outcome["name"]).upper()
+                                    # FIXED: Applies matching strict .upper casing across both properties to align text reads natively
                                     is_away = (away_full in out_name or out_name in away_full)
                                     price = int(outcome["price"])
                                     if b_key == "draftkings":
@@ -228,8 +229,8 @@ def fetch_verified_daily_slate():
                 if away_p_data.get("id") and home_p_data.get("id"):
                     matchup_list.append({
                         "Label": f"⚾ {away_team} ({away_p_data.get('fullName')}) @ {home_team} ({home_p_data.get('fullName')})",
-                        "AwaySP": away_p_data.get("fullName"), "AwayID": away_p_data.get("id"), "AwayTeam": away_team,
-                        "HomeSP": home_p_data.get("fullName"), "HomeID": home_p_data.get("id"), "HomeTeam": home_team,
+                        "AwaySP": away_p_data.get('fullName'), "AwayID": away_p_data.get('id'), "AwayTeam": away_team,
+                        "HomeSP": home_p_data.get('fullName'), "HomeID": home_p_data.get('id'), "HomeTeam": home_team,
                         **book_data
                     })
     except Exception:
@@ -434,6 +435,7 @@ with val_col3:
     st.metric(label="Calculated Game Total", value=f"{calculated_expected_total} Runs", delta=f"O/U Margin: {calculated_edge:+} Runs")
 
 st.write("#### 🎯 Execution Signals")
+st.markdown("---")
 sig_col1, sig_col2 = st.columns(2)
 
 with sig_col1:
