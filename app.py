@@ -52,7 +52,7 @@ TEAM_METRICS = {
     "HOU": {"ID": 117, "ParkFactor": 1.01, "BullpenWHIP": 1.35, "OffenseRPG": 4.49, "Name": "Astros (Minute Maid Park)", "FullName": "HOUSTON ASTROS"},
     "LAA": {"ID": 108, "ParkFactor": 0.99, "BullpenWHIP": 1.42, "OffenseRPG": 4.49, "Name": "Angels (Angel Stadium)", "FullName": "LOS ANGELES ANGELS"},
     "OAK": {"ID": 133, "ParkFactor": 0.94, "BullpenWHIP": 1.42, "OffenseRPG": 4.58, "Name": "Athletics (Sutter Health Park)", "FullName": "OAKLAND ATHLETICS"},
-    "SEA": {"ID": 136, "ParkFactor": 0.82, "BullpenWHIP": 1.34, "OffenseRPG": 4.18, "Name": "Mariners (T-Mobile Park)", "FullName": "SEATTLE MARINERS"},
+    "SEA": {"ID": 136, "ParkFactor": 0.82, "BullpenWHIP": 1.34, "OffenseRPG": 4.18, "Name": "Mariners (T-Mobile Park)", "FullName": "SEATTLE MARiners"},
     "TEX": {"ID": 140, "ParkFactor": 0.97, "BullpenWHIP": 1.26, "OffenseRPG": 4.40, "Name": "Rangers (Globe Life Field)", "FullName": "TEXAS RANGERS"},
     "ATL": {"ID": 144, "ParkFactor": 0.88, "BullpenWHIP": 1.09, "OffenseRPG": 4.74, "Name": "Braves (Truist Park)", "FullName": "ATLANTA BRAVES"},
     "MIA": {"ID": 146, "ParkFactor": 0.93, "BullpenWHIP": 1.17, "OffenseRPG": 4.52, "Name": "Marlins (loanDepot park)", "FullName": "MIAMI MARLINS"},
@@ -103,27 +103,29 @@ def fetch_all_standings_cached():
     except Exception:
         return {}
 
+# FIXED: Crawls the splitRecords array to fetch true home and away records correctly
 def fetch_team_records_and_splits(team_id):
     standings_data = fetch_all_standings_cached()
     profile = {"Record": "0-0", "DivRank": "N/A", "Home": "0-0", "Away": "0-0"}
     
-    if not standings_data:
+    if not standings_data or "records" not in standings_data:
         return profile
         
     try:
-        for record in standings_data.get("records", []):
+        for record in standings_data["records"]:
             for team_rec in record.get("teamRecords", []):
                 if int(team_rec.get("team", {}).get("id", 0)) == int(team_id):
                     profile["Record"] = f"{team_rec.get('wins', 0)}-{team_rec.get('losses', 0)}"
                     profile["DivRank"] = f"{team_rec.get('divisionRank', 'N/A')}"
                     
-                    h_w = team_rec.get("homeRecord", {}).get("wins", 0)
-                    h_l = team_rec.get("homeRecord", {}).get("losses", 0)
-                    a_w = team_rec.get("awayRecord", {}).get("wins", 0)
-                    a_l = team_rec.get("awayRecord", {}).get("losses", 0)
-                    
-                    profile["Home"] = f"{h_w}-{h_l}"
-                    profile["Away"] = f"{a_w}-{a_l}"
+                    # Target split dictionaries under nested record layer
+                    records_meta = team_rec.get("records", {})
+                    for split in records_meta.get("splitRecords", []):
+                        s_name = str(split.get("type", "")).lower()
+                        if s_name == "home":
+                            profile["Home"] = f"{split.get('wins', 0)}-{split.get('losses', 0)}"
+                        elif s_name in ["away", "road"]:
+                            profile["Away"] = f"{split.get('wins', 0)}-{split.get('losses', 0)}"
                     return profile
     except Exception:
         pass
