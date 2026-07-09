@@ -76,10 +76,12 @@ TRANSLATION_MAP = {
     "OAK": "OAK", "WSH": "WSH", "ARI": "AZ", "ANA": "LAA", "LOS": "LAD"
 }
 
+# --- 3. HIGH-SPEED MEMORY CACHING EXTRACTORS ---
+@st.cache_data(ttl=1800)
 def fetch_live_player_stats(player_id):
     url = f"https://statsapi.mlb.com/api/v1/people/{player_id}/stats?stats=season&group=pitching"
     try:
-        data = requests.get(url, timeout=7).json()
+        data = requests.get(url, timeout=5).json()
         splits = data.get("stats", [{}])[0].get("splits", [])
         if splits:
             stats = splits[0].get("stat", {})
@@ -93,11 +95,22 @@ def fetch_live_player_stats(player_id):
         pass
     return {"ERA": 4.00, "K9": 8.5, "BB9": 3.0, "WHIP": 1.25}
 
-def fetch_team_records_and_splits(team_id):
+@st.cache_data(ttl=3600)
+def fetch_all_standings_cached():
     url_standings = "https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&season=2026"
-    profile = {"Record": "0-0", "DivRank": "N/A", "Home": "0-0", "Away": "0-0"}
     try:
-        standings_data = requests.get(url_standings, timeout=5).json()
+        return requests.get(url_standings, timeout=5).json()
+    except Exception:
+        return {}
+
+def fetch_team_records_and_splits(team_id):
+    standings_data = fetch_all_standings_cached()
+    profile = {"Record": "0-0", "DivRank": "N/A", "Home": "0-0", "Away": "0-0"}
+    
+    if not standings_data:
+        return profile
+        
+    try:
         for record in standings_data.get("records", []):
             for team_rec in record.get("teamRecords", []):
                 if int(team_rec.get("team", {}).get("id", 0)) == int(team_id):
@@ -131,7 +144,6 @@ def fetch_odds_api_feed():
 
 @st.cache_data(ttl=60)
 def fetch_verified_daily_slate():
-    # LOCKED: Today's active slate parameter parameters
     target_date_str = "2026-07-09"
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={target_date_str}&hydrate=probablePitcher,team"
     
@@ -259,12 +271,11 @@ game_data = next(m for m in active_slate if m["Label"] == selected_game_str)
 away_t_code = game_data["AwayTeam"]
 home_t_code = game_data["HomeTeam"]
 
-with st.spinner("Compiling live team division standings..."):
-    away_id = TEAM_METRICS.get(away_t_code, {"ID": 110})["ID"]
-    home_id = TEAM_METRICS.get(home_t_code, {"ID": 111})["ID"]
-    
-    away_splits = fetch_team_records_and_splits(away_id)
-    home_splits = fetch_team_records_and_splits(home_id)
+away_id = TEAM_METRICS.get(away_t_code, {"ID": 110})["ID"]
+home_id = TEAM_METRICS.get(home_t_code, {"ID": 111})["ID"]
+
+away_splits = fetch_team_records_and_splits(away_id)
+home_splits = fetch_team_records_and_splits(home_id)
 
 st.write("#### 🏆 Divisional Standings & Context Split Matrix")
 split_col1, split_col2 = st.columns(2)
@@ -273,9 +284,8 @@ with split_col1:
 with split_col2:
     st.info(f"**Home: {home_t_code}**\n\n* Overall Record: `{home_splits['Record']}`\n* Division Rank: #{home_splits['DivRank']}\n* Home Split Record: `{home_splits['Home']}`")
 
-with st.spinner("Harvesting official player stats..."):
-    raw_away_stats = fetch_live_player_stats(game_data["AwayID"])
-    raw_home_stats = fetch_live_player_stats(game_data["HomeID"])
+raw_away_stats = fetch_live_player_stats(game_data["AwayID"])
+raw_home_stats = fetch_live_player_stats(game_data["HomeID"])
 
 # --- 5. MATHEMATICAL ESTIMATION LAYER ---
 def build_composite_profile(name, team, stats):
