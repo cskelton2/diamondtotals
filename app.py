@@ -52,7 +52,7 @@ TEAM_METRICS = {
     "HOU": {"ID": 117, "ParkFactor": 1.01, "BullpenWHIP": 1.35, "OffenseRPG": 4.49, "Name": "Astros (Minute Maid Park)", "FullName": "HOUSTON ASTROS"},
     "LAA": {"ID": 108, "ParkFactor": 0.99, "BullpenWHIP": 1.42, "OffenseRPG": 4.49, "Name": "Angels (Angel Stadium)", "FullName": "LOS ANGELES ANGELS"},
     "OAK": {"ID": 133, "ParkFactor": 0.94, "BullpenWHIP": 1.42, "OffenseRPG": 4.58, "Name": "Athletics (Sutter Health Park)", "FullName": "OAKLAND ATHLETICS"},
-    "SEA": {"ID": 136, "ParkFactor": 0.82, "BullpenWHIP": 1.34, "OffenseRPG": 4.18, "Name": "Mariners (T-Mobile Park)", "FullName": "SEATTLE MARiners"},
+    "SEA": {"ID": 136, "ParkFactor": 0.82, "BullpenWHIP": 1.34, "OffenseRPG": 4.18, "Name": "Mariners (T-Mobile Park)", "FullName": "SEATTLE MARINERS"},
     "TEX": {"ID": 140, "ParkFactor": 0.97, "BullpenWHIP": 1.26, "OffenseRPG": 4.40, "Name": "Rangers (Globe Life Field)", "FullName": "TEXAS RANGERS"},
     "ATL": {"ID": 144, "ParkFactor": 0.88, "BullpenWHIP": 1.09, "OffenseRPG": 4.74, "Name": "Braves (Truist Park)", "FullName": "ATLANTA BRAVES"},
     "MIA": {"ID": 146, "ParkFactor": 0.93, "BullpenWHIP": 1.17, "OffenseRPG": 4.52, "Name": "Marlins (loanDepot park)", "FullName": "MIAMI MARLINS"},
@@ -65,7 +65,7 @@ TEAM_METRICS = {
     "PIT": {"ID": 134, "ParkFactor": 1.01, "BullpenWHIP": 1.40, "OffenseRPG": 5.16, "Name": "Pirates (PNC Park)", "FullName": "PITTSBURGH PIRATES"},
     "STL": {"ID": 138, "ParkFactor": 0.98, "BullpenWHIP": 1.39, "OffenseRPG": 4.64, "Name": "Cardinals (Busch Stadium)", "FullName": "ST. LOUIS CARDINALS"},
     "AZ":  {"ID": 109, "ParkFactor": 1.04, "BullpenWHIP": 1.26, "OffenseRPG": 4.27, "Name": "Diamondbacks (Chase Field)", "FullName": "ARIZONA DIAMONDBACKS"},
-    "COL": {"ID": 115, "ParkFactor": 1.31, "BullpenWHIP": 1.49, "OffenseRPG": 4.85, "Name": "Rockies (COors Field)", "FullName": "COLORADO ROCKIES"},
+    "COL": {"ID": 115, "ParkFactor": 1.31, "BullpenWHIP": 1.49, "OffenseRPG": 4.85, "Name": "Rockies (Coors Field)", "FullName": "COLORADO ROCKIES"},
     "LAD": {"ID": 119, "ParkFactor": 0.99, "BullpenWHIP": 1.22, "OffenseRPG": 5.34, "Name": "Dodgers (Dodger Stadium)", "FullName": "LOS ANGELES DODGERS"},
     "SD":  {"ID": 135, "ParkFactor": 0.94, "BullpenWHIP": 1.24, "OffenseRPG": 4.62, "Name": "Padres (Petco Park)", "FullName": "SAN DIEGO PADRES"},
     "SF":  {"ID": 137, "ParkFactor": 0.91, "BullpenWHIP": 1.24, "OffenseRPG": 4.05, "Name": "Giants (Oracle Park)", "FullName": "SAN FRANCISCO GIANTS"}
@@ -131,7 +131,8 @@ def fetch_odds_api_feed():
 
 @st.cache_data(ttl=60)
 def fetch_verified_daily_slate():
-    target_date_str = "2026-07-08"
+    # LOCKED: Today's active slate parameter parameters
+    target_date_str = "2026-07-09"
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={target_date_str}&hydrate=probablePitcher,team"
     
     live_odds_feed = fetch_odds_api_feed()
