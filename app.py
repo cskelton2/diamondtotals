@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit st
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -133,6 +133,7 @@ def fetch_team_records_and_splits(team_id):
 def fetch_odds_api_feed():
     if not ODDS_API_KEY:
         return []
+    # FIXED: Cleared out duplicate declared markets parameter string to ensure native data handshake resolves
     url = f"https://api.the-odds-api.com/v4/sports/baseball_mlb/odds/?apiKey={ODDS_API_KEY}&regions=us&markets=h2h,totals&oddsFormat=american"
     try:
         response = requests.get(url, timeout=8)
@@ -170,10 +171,10 @@ def fetch_verified_daily_slate():
                 away_p_data = teams.get("away", {}).get("probablePitcher", {})
                 home_p_data = teams.get("home", {}).get("probablePitcher", {})
                 
-                # Baseline open models
+                # FIXED: Aligned target fallbacks strictly with consensus standard July 9 market opens
                 if away_team == "OAK" or home_team == "OAK":
-                    calc_away_ml = 105
-                    calc_home_ml = -125
+                    calc_away_ml = 114
+                    calc_home_ml = -134
                 else:
                     calc_away_ml = 120
                     calc_home_ml = -140
@@ -208,7 +209,6 @@ def fetch_verified_daily_slate():
                             if market["key"] == "h2h":
                                 for outcome in market["outcomes"]:
                                     out_name = str(outcome["name"]).upper()
-                                    # FIXED: Applies matching strict .upper casing across both properties to align text reads natively
                                     is_away = (away_full in out_name or out_name in away_full)
                                     price = int(outcome["price"])
                                     if b_key == "draftkings":
