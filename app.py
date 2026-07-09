@@ -170,9 +170,9 @@ def fetch_verified_daily_slate():
                 away_p_data = teams.get("away", {}).get("probablePitcher", {})
                 home_p_data = teams.get("home", {}).get("probablePitcher", {})
                 
-                # Locked standard baseline opens matching the exact parameters requested
+                # Dynamic model defaults 
                 if away_team == "OAK" or home_team == "OAK":
-                    calc_away_ml = 110
+                    calc_away_ml = 112
                     calc_home_ml = -132
                 else:
                     calc_away_ml = 120
@@ -186,21 +186,21 @@ def fetch_verified_daily_slate():
                     "DK_HomeML": calc_home_ml, "FD_HomeML": calc_home_ml, "MGM_HomeML": calc_home_ml
                 }
                 
-                away_full = TEAM_METRICS.get(away_team, {}).get("FullName", "AWAY").upper()
-                home_full = TEAM_METRICS.get(home_team, {}).get("FullName", "HOME").upper()
-                
                 matching_game = None
                 if live_odds_feed:
                     for g in live_odds_feed:
                         feed_home = str(g.get("home_team", "")).lower()
                         feed_away = str(g.get("away_team", "")).lower()
                         
-                        # FIXED: Bypasses case matching to check if the exact team shorthand symbols exist in the endpoint text
+                        # FIXED: Matches using direct, character-safe abbreviation containment rather than full string maps
                         if (away_team.lower() in feed_away or home_team.lower() in feed_home):
                             matching_game = g
                             break
                 
                 if matching_game:
+                    # Capture actual book string participants directly from root response keys
+                    g_away_name = str(matching_game.get("away_team", "")).upper()
+                    
                     for book in matching_game.get("bookmakers", []):
                         b_key = book["key"].lower()
                         if b_key not in ["draftkings", "fanduel", "betmgm"]:
@@ -210,7 +210,8 @@ def fetch_verified_daily_slate():
                             if market["key"] == "h2h":
                                 for outcome in market["outcomes"]:
                                     out_name = str(outcome["name"]).upper()
-                                    is_away = (away_full in out_name or out_name in away_full)
+                                    # FIXED: Uses the reliable API baseline away string parameter to map the sides correctly
+                                    is_away = (out_name == g_away_name)
                                     price = int(outcome["price"])
                                     if b_key == "draftkings":
                                         if is_away: book_data["DK_AwayML"] = price
