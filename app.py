@@ -144,7 +144,8 @@ def fetch_odds_api_feed():
 
 @st.cache_data(ttl=60)
 def fetch_verified_daily_slate():
-    target_date_str = "2026-07-09"
+    # LOCKED: Tomorrow's date target filter mapping
+    target_date_str = "2026-07-10"
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={target_date_str}&hydrate=probablePitcher,team"
     
     live_odds_feed = fetch_odds_api_feed()
@@ -170,13 +171,19 @@ def fetch_verified_daily_slate():
                 away_p_data = teams.get("away", {}).get("probablePitcher", {})
                 home_p_data = teams.get("home", {}).get("probablePitcher", {})
                 
-                # Dynamic model defaults 
+                # Baseline opens
                 if away_team == "OAK" or home_team == "OAK":
                     calc_away_ml = 112
                     calc_home_ml = -132
                 else:
-                    calc_away_ml = 120
-                    calc_home_ml = -140
+                    away_rpg_meta = TEAM_METRICS.get(away_team, {"OffenseRPG": 4.50}).get("OffenseRPG")
+                    home_rpg_meta = TEAM_METRICS.get(home_team, {"OffenseRPG": 4.50}).get("OffenseRPG")
+                    if away_rpg_meta > home_rpg_meta:
+                        calc_away_ml = -135
+                        calc_home_ml = 115
+                    else:
+                        calc_away_ml = 120
+                        calc_home_ml = -140
                 
                 book_data = {
                     "DK_OU": 9.0 if (away_team == "OAK" or home_team == "OAK") else 8.5, 
@@ -192,13 +199,11 @@ def fetch_verified_daily_slate():
                         feed_home = str(g.get("home_team", "")).lower()
                         feed_away = str(g.get("away_team", "")).lower()
                         
-                        # FIXED: Matches using direct, character-safe abbreviation containment rather than full string maps
                         if (away_team.lower() in feed_away or home_team.lower() in feed_home):
                             matching_game = g
                             break
                 
                 if matching_game:
-                    # Capture actual book string participants directly from root response keys
                     g_away_name = str(matching_game.get("away_team", "")).upper()
                     
                     for book in matching_game.get("bookmakers", []):
@@ -210,7 +215,6 @@ def fetch_verified_daily_slate():
                             if market["key"] == "h2h":
                                 for outcome in market["outcomes"]:
                                     out_name = str(outcome["name"]).upper()
-                                    # FIXED: Uses the reliable API baseline away string parameter to map the sides correctly
                                     is_away = (out_name == g_away_name)
                                     price = int(outcome["price"])
                                     if b_key == "draftkings":
@@ -243,7 +247,7 @@ def fetch_verified_daily_slate():
 active_slate = fetch_verified_daily_slate()
 
 if not active_slate:
-    st.warning("⚠️ Reading slate configurations...")
+    st.warning("⚠️ Reading tomorrow's calendar slate matrix...")
     active_slate = [{
         "Label": "⚾ TOR (Dylan Cease) @ SF (Logan Webb)",
         "AwaySP": "Dylan Cease", "AwayID": 656302, "AwayTeam": "TOR",
