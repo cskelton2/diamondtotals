@@ -144,8 +144,8 @@ def fetch_odds_api_feed():
 
 @st.cache_data(ttl=60)
 def fetch_verified_daily_slate():
-    # LOCKED: Tomorrow's date target filter mapping
-    target_date_str = "2026-07-10"
+    # LOCKED: Today's active date schedule tracker parameters
+    target_date_str = "2026-07-11"
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={target_date_str}&hydrate=probablePitcher,team"
     
     live_odds_feed = fetch_odds_api_feed()
@@ -171,7 +171,7 @@ def fetch_verified_daily_slate():
                 away_p_data = teams.get("away", {}).get("probablePitcher", {})
                 home_p_data = teams.get("home", {}).get("probablePitcher", {})
                 
-                # Baseline opens
+                # Dynamic baseline default opens
                 if away_team == "OAK" or home_team == "OAK":
                     calc_away_ml = 112
                     calc_home_ml = -132
@@ -247,7 +247,7 @@ def fetch_verified_daily_slate():
 active_slate = fetch_verified_daily_slate()
 
 if not active_slate:
-    st.warning("⚠️ Reading tomorrow's calendar slate matrix...")
+    st.warning("⚠️ Reading dynamic database configurations...")
     active_slate = [{
         "Label": "⚾ TOR (Dylan Cease) @ SF (Logan Webb)",
         "AwaySP": "Dylan Cease", "AwayID": 656302, "AwayTeam": "TOR",
