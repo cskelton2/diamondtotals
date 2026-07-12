@@ -144,8 +144,8 @@ def fetch_odds_api_feed():
 
 @st.cache_data(ttl=60)
 def fetch_verified_daily_slate():
-    # LOCKED: Today's active date schedule tracker parameters
-    target_date_str = "2026-07-11"
+    # LOCKED: Calendar slate date configuration mapping
+    target_date_str = "2026-07-12"
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={target_date_str}&hydrate=probablePitcher,team"
     
     live_odds_feed = fetch_odds_api_feed()
@@ -171,24 +171,18 @@ def fetch_verified_daily_slate():
                 away_p_data = teams.get("away", {}).get("probablePitcher", {})
                 home_p_data = teams.get("home", {}).get("probablePitcher", {})
                 
-                # Dynamic baseline default opens
-                if away_team == "OAK" or home_team == "OAK":
-                    calc_away_ml = 112
-                    calc_home_ml = -132
+                # Baseline opens
+                away_rpg_meta = TEAM_METRICS.get(away_team, {"OffenseRPG": 4.50}).get("OffenseRPG")
+                home_rpg_meta = TEAM_METRICS.get(home_team, {"OffenseRPG": 4.50}).get("OffenseRPG")
+                if away_rpg_meta > home_rpg_meta:
+                    calc_away_ml = -115
+                    calc_home_ml = 105
                 else:
-                    away_rpg_meta = TEAM_METRICS.get(away_team, {"OffenseRPG": 4.50}).get("OffenseRPG")
-                    home_rpg_meta = TEAM_METRICS.get(home_team, {"OffenseRPG": 4.50}).get("OffenseRPG")
-                    if away_rpg_meta > home_rpg_meta:
-                        calc_away_ml = -135
-                        calc_home_ml = 115
-                    else:
-                        calc_away_ml = 120
-                        calc_home_ml = -140
+                    calc_away_ml = 110
+                    calc_home_ml = -130
                 
                 book_data = {
-                    "DK_OU": 9.0 if (away_team == "OAK" or home_team == "OAK") else 8.5, 
-                    "FD_OU": 9.0 if (away_team == "OAK" or home_team == "OAK") else 8.5, 
-                    "MGM_OU": 9.0 if (away_team == "OAK" or home_team == "OAK") else 8.5,
+                    "DK_OU": 9.0, "FD_OU": 9.0, "MGM_OU": 9.0,
                     "DK_AwayML": calc_away_ml, "FD_AwayML": calc_away_ml, "MGM_AwayML": calc_away_ml,
                     "DK_HomeML": calc_home_ml, "FD_HomeML": calc_home_ml, "MGM_HomeML": calc_home_ml
                 }
@@ -205,6 +199,7 @@ def fetch_verified_daily_slate():
                 
                 if matching_game:
                     g_away_name = str(matching_game.get("away_team", "")).upper()
+                    g_home_name = str(matching_game.get("home_team", "")).upper()
                     
                     for book in matching_game.get("bookmakers", []):
                         b_key = book["key"].lower()
@@ -215,7 +210,8 @@ def fetch_verified_daily_slate():
                             if market["key"] == "h2h":
                                 for outcome in market["outcomes"]:
                                     out_name = str(outcome["name"]).upper()
-                                    is_away = (out_name == g_away_name)
+                                    # FIXED: Crawls direct title arrays from the live payload tracking strings
+                                    is_away = (out_name == g_away_name or out_name in g_away_name)
                                     price = int(outcome["price"])
                                     if b_key == "draftkings":
                                         if is_away: book_data["DK_AwayML"] = price
@@ -247,7 +243,7 @@ def fetch_verified_daily_slate():
 active_slate = fetch_verified_daily_slate()
 
 if not active_slate:
-    st.warning("⚠️ Reading dynamic database configurations...")
+    st.warning("⚠️ Reading slate configurations...")
     active_slate = [{
         "Label": "⚾ TOR (Dylan Cease) @ SF (Logan Webb)",
         "AwaySP": "Dylan Cease", "AwayID": 656302, "AwayTeam": "TOR",
