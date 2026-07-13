@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import requests
 
 st.set_page_config(page_title="DiamondTotals | All-Star Derby Model", layout="centered")
 
@@ -68,17 +69,33 @@ DERBY_FIELD = {
     }
 }
 
+# --- 2. HIGH-SPEED SAFETY NETWORK WRAPPER ---
+@st.cache_data(ttl=300)
+def fetch_odds_api_feed_safe():
+    url = "https://api.the-odds-api.com/v4/sports/baseball_mlb/odds/?apiKey=ee1c905aa44500ef2bae248b2c415ae5&regions=us&markets=h2h&oddsFormat=american"
+    try:
+        # FIXED: Forces a strict 3-second network cutoff to stop the layout from hanging during the All-Star Break
+        response = requests.get(url, timeout=3)
+        if response.status_code == 200:
+            return response.json()
+    except Exception:
+        pass
+    return []
+
+# Trigger high-speed background check
+_ = fetch_odds_api_feed_safe()
+
 st.write("### 1. Select Active Derby Competitor")
 slugger_list = list(DERBY_FIELD.keys())
 selected_slugger = st.selectbox("Choose a hitter to analyze:", slugger_list)
 
 slugger_data = DERBY_FIELD[selected_slugger]
 
-# --- 2. CONTEXT STRUCTURAL PANEL ---
+# --- 3. CONTEXT STRUCTURAL PANEL ---
 st.write("#### 🏆 Competitor Profile Context")
 st.info(f"**Slugger Summary:** {slugger_data['Bio']}\n\n* **Derby Pitcher:** `{slugger_data['Pitcher']}`")
 
-# --- 3. DYNAMIC METRIC Radar SNOWFLAKE ---
+# --- 4. DYNAMIC METRIC RADAR SNOWFLAKE ---
 st.write("### 2. Hit Power Profile Matrix")
 labels = ['Raw Bat Speed', 'Launch Precision', 'Exit Velocity Floor', 'Pacing Endurance']
 num_vars = len(labels)
@@ -101,7 +118,7 @@ plt.ylim(0, 10)
 plt_ax.grid(color='#334155', linestyle='--', linewidth=0.5)
 st.pyplot(fig)
 
-# --- 4. MARKET ODDS COMPARISON MATRIX ---
+# --- 5. MARKET ODDS COMPARISON MATRIX ---
 st.write("### 3. Consensus Sportsbook Outright Derby Lines")
 odds_grid = []
 for name, data in DERBY_FIELD.items():
@@ -113,7 +130,7 @@ for name, data in DERBY_FIELD.items():
     })
 st.dataframe(pd.DataFrame(odds_grid).set_index("Slugger Field Matchup"), use_container_width=True)
 
-# --- 5. STATISTICAL ADVANCED REFERENCE PANEL ---
+# --- 6. STATISTICAL ADVANCED REFERENCE PANEL ---
 st.write("### 4. Advanced Batted-Ball Metrics Reference")
 col_b1, col_b2, col_b3 = st.columns(3)
 with col_b1:
@@ -123,10 +140,9 @@ with col_b2:
 with col_b3:
     st.metric(label="Max Exit Velocity", value=f"{slugger_data['MaxEV']} MPH")
 
-# --- 6. MODEL OUTCOME SIMULATION OUTPUT ---
+# --- 7. MODEL OUTCOME SIMULATION OUTPUT ---
 st.write("### 5. Final DiamondTotals Derby Projections")
 
-# Algorithmic win expectancy score formulation
 raw_model_score = (slugger_data['BatSpeed'] * 0.40) + (slugger_data['BarrelPct'] * 2.5) + (slugger_data['Scores'][3] * 5.0)
 win_expectancy_pct = min(28.5, max(4.5, (raw_model_score / 150.0) * 100))
 
@@ -146,7 +162,7 @@ with sig_col2:
     else:
         st.warning("⚠️ **MARKET HOLD PASS**\n\nCurrent sportsbook price tracking numbers align squarely inside fair value variance tracks.")
 
-# --- 7. COMPLIANCE FOOTER BLOCK ---
+# --- 8. COMPLIANCE FOOTER BLOCK ---
 st.markdown("""
 ---
 <div style="text-align: center; color: #64748b; font-size: 11px; padding: 10px;">
