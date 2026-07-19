@@ -144,8 +144,8 @@ def fetch_odds_api_feed():
 
 @st.cache_data(ttl=60)
 def fetch_verified_daily_slate():
-    # LOCKED: Today's post All-Star return slate date target
-    target_date_str = "2026-07-18"
+    # LOCKED: Today's live slate date parameter
+    target_date_str = "2026-07-19"
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={target_date_str}&hydrate=probablePitcher,team"
     
     live_odds_feed = fetch_odds_api_feed()
@@ -246,12 +246,12 @@ active_slate = fetch_verified_daily_slate()
 if not active_slate:
     st.warning("⚠️ Reading baseline slate matrix configs...")
     active_slate = [{
-        "Label": "⚾ DET (Tarik Skubal) @ LAA (Griffin Canning)",
-        "AwaySP": "Tarik Skubal", "AwayID": 669373, "AwayTeam": "DET",
-        "HomeSP": "Griffin Canning", "HomeID": 656288, "HomeTeam": "LAA",
-        "DK_OU": 8.5, "FD_OU": 8.5, "MGM_OU": 8.5,
-        "DK_AwayML": -135, "FD_AwayML": -132, "MGM_AwayML": -138,
-        "DK_HomeML": 115, "FD_HomeML": 112, "MGM_HomeML": 118
+        "Label": "⚾ PIT (Paul Skenes) @ CLE (Joey Cantillo)",
+        "AwaySP": "Paul Skenes", "AwayID": 694973, "AwayTeam": "PIT",
+        "HomeSP": "Joey Cantillo", "HomeID": 673289, "HomeTeam": "CLE",
+        "DK_OU": 7.5, "FD_OU": 7.5, "MGM_OU": 7.5,
+        "DK_AwayML": 108, "FD_AwayML": 105, "MGM_AwayML": 110,
+        "DK_HomeML": -126, "FD_HomeML": -122, "MGM_HomeML": -130
     }]
 
 st.write("### 1. Select Active Matchup Board")
@@ -467,3 +467,4 @@ st.markdown("""
     <br>Must be 21+ to gamble. If you or someone you know has a gambling problem, call <strong>1-800-GAMBLER</strong>.
 </div>
 """, unsafe_allow_html=True)
+
