@@ -145,7 +145,7 @@ def fetch_odds_api_feed():
 @st.cache_data(ttl=60)
 def fetch_verified_daily_slate():
     # LOCKED: Today's live slate date parameter
-    target_date_str = "2026-07-19"
+    target_date_str = "2026-07-21"
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={target_date_str}&hydrate=probablePitcher,team"
     
     live_odds_feed = fetch_odds_api_feed()
@@ -246,12 +246,12 @@ active_slate = fetch_verified_daily_slate()
 if not active_slate:
     st.warning("⚠️ Reading baseline slate matrix configs...")
     active_slate = [{
-        "Label": "⚾ PIT (Paul Skenes) @ CLE (Joey Cantillo)",
-        "AwaySP": "Paul Skenes", "AwayID": 694973, "AwayTeam": "PIT",
-        "HomeSP": "Joey Cantillo", "HomeID": 673289, "HomeTeam": "CLE",
-        "DK_OU": 7.5, "FD_OU": 7.5, "MGM_OU": 7.5,
-        "DK_AwayML": 108, "FD_AwayML": 105, "MGM_AwayML": 110,
-        "DK_HomeML": -126, "FD_HomeML": -122, "MGM_HomeML": -130
+        "Label": "⚾ NYY (Gerrit Cole) @ BOS (Brayan Bello)",
+        "AwaySP": "Gerrit Cole", "AwayID": 543037, "AwayTeam": "NYY",
+        "HomeSP": "Brayan Bello", "HomeID": 678306, "HomeTeam": "BOS",
+        "DK_OU": 8.5, "FD_OU": 8.5, "MGM_OU": 8.5,
+        "DK_AwayML": -130, "FD_AwayML": -128, "MGM_AwayML": -132,
+        "DK_HomeML": 110, "FD_HomeML": 108, "MGM_HomeML": 112
     }]
 
 st.write("### 1. Select Active Matchup Board")
